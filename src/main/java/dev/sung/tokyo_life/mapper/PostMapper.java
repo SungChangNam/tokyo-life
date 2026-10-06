@@ -12,7 +12,8 @@ public interface PostMapper {
     @Select("""
             SELECT id, title, content
             FROM posts
-            ORDER BY id
+            WHERE status = 'PUBLISHED'
+            ORDER BY published_at DESC, id DESC
             """)
     List<Post> findAll();
 
@@ -20,6 +21,7 @@ public interface PostMapper {
             SELECT id, title, content
             FROM posts
             WHERE id = #{id}
+              AND status = 'PUBLISHED'
             """)
     Post findById(Long id);
 }
