@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: tokyo-life
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tokyo_life
+    username: postgres
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver

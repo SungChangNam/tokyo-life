@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tokyo Life Blog</title>
+</head>
+<body>
+
+<h1>Tokyo Life Blog</h1>
+
+<h2>게시글 목록</h2>
+
+<div th:each="post : ${posts}">
+    <h3>
+        <a th:href="@{/posts/{id}(id=${post.id})}"
+           th:text="${post.title}">
+            게시글 제목
+        </a>
+    </h3>
+
+    <p th:text="${post.content}">게시글 내용</p>
+    <hr>
+</div>
+
+</body>
+</html>
