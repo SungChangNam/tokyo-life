@@ -2,7 +2,9 @@ package dev.sung.tokyo_life.service;
 
 import dev.sung.tokyo_life.model.Post;
 import dev.sung.tokyo_life.repository.PostRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -20,6 +22,12 @@ public class PostService {
     }
 
     public Post findById(Long id) {
-        return postRepository.findById(id);
+        Post post = postRepository.findById(id);
+
+        if (post == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        return post;
     }
 }
