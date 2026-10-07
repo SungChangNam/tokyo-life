@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tokyo Life 관리자</title>
+</head>
+<body>
+
+<h1>관리자 페이지</h1>
+
+<p>
+    <span th:text="${username}">admin</span>님, 로그인했습니다.
+</p>
+
+<a th:href="@{/}">홈페이지로 이동</a>
+
+<form th:action="@{/logout}" method="post">
+    <button type="submit">로그아웃</button>
+</form>
+
+</body>
+</html>
