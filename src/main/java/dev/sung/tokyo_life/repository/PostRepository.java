@@ -22,4 +22,21 @@ public class PostRepository {
     public Post findById(Long id) {
         return postMapper.findById(id);
     }
+    public int insert(
+            Long authorId,
+            Long categoryId,
+            String title,
+            String summary,
+            String content,
+            String status
+    ) {
+        return postMapper.insert(
+                authorId,
+                categoryId,
+                title,
+                summary,
+                content,
+                status
+        );
+    }
 }
