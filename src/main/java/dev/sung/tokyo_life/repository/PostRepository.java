@@ -3,6 +3,8 @@ package dev.sung.tokyo_life.repository;
 import dev.sung.tokyo_life.mapper.PostMapper;
 import dev.sung.tokyo_life.model.Post;
 import org.springframework.stereotype.Repository;
+import dev.sung.tokyo_life.model.AdminPostSummary;
+import dev.sung.tokyo_life.model.AdminPostDetail;
 
 import java.util.List;
 
@@ -21,5 +23,47 @@ public class PostRepository {
 
     public Post findById(Long id) {
         return postMapper.findById(id);
+    }
+    public int insert(
+            Long authorId,
+            Long categoryId,
+            String title,
+            String summary,
+            String content,
+            String status
+    ) {
+        return postMapper.insert(
+                authorId,
+                categoryId,
+                title,
+                summary,
+                content,
+                status
+        );
+    }
+    public List<AdminPostSummary> findAllForAdmin() {
+        return postMapper.findAllForAdmin();
+    }
+
+    public AdminPostDetail findByIdForAdmin(Long id) {
+        return postMapper.findByIdForAdmin(id);
+    }
+
+    public int update(
+            Long id,
+            Long categoryId,
+            String title,
+            String summary,
+            String content,
+            String status
+    ) {
+        return postMapper.update(
+                id,
+                categoryId,
+                title,
+                summary,
+                content,
+                status
+        );
     }
 }

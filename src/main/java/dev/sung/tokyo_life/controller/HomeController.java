@@ -11,6 +11,7 @@ public class HomeController {
     private final PostService postService;
 
     public HomeController(PostService postService) {
+
         this.postService = postService;
     }
 

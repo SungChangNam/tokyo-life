@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>게시글 관리 | Tokyo Life</title>
+</head>
+<body>
+<h1>게시글 관리</h1>
+<p th:if="${message}"
+   th:text="${message}"
+   role="status">
+</p>
+<nav>
+    <a th:href="@{/admin}">관리자 홈</a>
+    <a th:href="@{/admin/posts/new}">새 글 작성</a>
+</nav>
+
+<p th:if="${#lists.isEmpty(posts)}">
+    등록된 게시글이 없습니다.
+</p>
+
+<table th:unless="${#lists.isEmpty(posts)}">
+    <thead>
+    <tr>
+        <th scope="col">번호</th>
+        <th scope="col">제목</th>
+        <th scope="col">상태</th>
+        <th scope="col">작성 시간</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="post : ${posts}">
+        <td th:text="${post.id}">1</td>
+        <td>
+            <a th:href="@{/admin/posts/{id}/edit(id=${post.id})}"
+               th:text="${post.title}">
+                게시글 제목
+            </a>
+        </td>
+        <td th:text="${post.status == 'PUBLISHED' ? '공개' : '임시 저장'}">
+            임시 저장
+        </td>
+        <td th:text="${#temporals.format(
+                post.createdAt.atZoneSameInstant(
+                    T(java.time.ZoneId).of('Asia/Tokyo')
+                ),
+                'yyyy-MM-dd HH:mm'
+            )}">
+            2026-10-12 23:00
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

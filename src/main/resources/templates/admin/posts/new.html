@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 작성 | Tokyo Life</title>
+</head>
+<body>
+<h1>게시글 작성</h1>
+
+<form th:action="@{/admin/posts}"
+      th:object="${postForm}"
+      method="post">
+
+    <div th:if="${#fields.hasAnyErrors()}" role="alert">
+        <p>입력 내용을 확인해주세요.</p>
+        <ul>
+            <li th:each="error : ${#fields.allErrors()}"
+                th:text="${error}">
+            </li>
+        </ul>
+    </div>
+
+    <div>
+        <label for="title">제목</label>
+        <input type="text"
+               id="title"
+               th:field="*{title}"
+               maxlength="150"
+               required>
+    </div>
+
+    <div>
+        <label for="summary">요약</label>
+        <input type="text"
+               id="summary"
+               th:field="*{summary}"
+               maxlength="300">
+    </div>
+
+    <div>
+        <label for="categoryId">카테고리</label>
+        <select id="categoryId" th:field="*{categoryId}">
+            <option value="">선택 안 함</option>
+
+            <option th:each="category : ${categories}"
+                    th:value="${category.id}"
+                    th:text="${category.name}">
+            </option>
+        </select>
+    </div>
+
+    <div>
+        <label for="content">본문</label>
+        <textarea id="content"
+                  th:field="*{content}"
+                  rows="15"
+                  cols="60"></textarea>
+    </div>
+
+    <div>
+        <label for="status">공개 상태</label>
+        <select id="status" th:field="*{status}">
+            <option value="DRAFT">임시 저장</option>
+            <option value="PUBLISHED">공개</option>
+        </select>
+    </div>
+
+    <p>공개하려면 제목, 카테고리, 본문이 필요합니다.</p>
+
+    <button type="submit">저장</button>
+</form>
+
+<p><a th:href="@{/admin}">관리자 홈으로</a></p>
+</body>
+</html>

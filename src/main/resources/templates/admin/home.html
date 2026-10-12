@@ -17,6 +17,9 @@
 <form th:action="@{/logout}" method="post">
     <button type="submit">로그아웃</button>
 </form>
-
+<p>
+    <a th:href="@{/admin/posts/new}">게시글 작성</a>
+</p>
+<p th:if="${message}" th:text="${message}" role="status"></p>
 </body>
 </html>
