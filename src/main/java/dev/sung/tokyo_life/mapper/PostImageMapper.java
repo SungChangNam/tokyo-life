@@ -110,4 +110,19 @@ public interface PostImageMapper {
             @Param("imageId") Long imageId,
             @Param("postId") Long postId
     );
+
+    @Update("""
+        UPDATE post_images
+        SET alt_text = #{altText},
+            display_order = #{displayOrder},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{imageId}
+          AND post_id = #{postId}
+        """)
+    int updateDetails(
+            @Param("imageId") Long imageId,
+            @Param("postId") Long postId,
+            @Param("altText") String altText,
+            @Param("displayOrder") Integer displayOrder
+    );
 }

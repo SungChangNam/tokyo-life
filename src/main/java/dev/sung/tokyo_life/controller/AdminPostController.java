@@ -24,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
-
+import dev.sung.tokyo_life.form.ImageDetailsForm;
 
 import java.security.Principal;
 
@@ -231,6 +231,43 @@ public class AdminPostController {
                 "message",
                 "대표 이미지를 변경했습니다."
         );
+
+        return "redirect:/admin/posts/" + id + "/edit";
+    }
+
+    @PostMapping("/{id}/images/{imageId}/details")
+    public String updateImageDetails(
+            @PathVariable("id") Long id,
+            @PathVariable("imageId") Long imageId,
+            @Valid @ModelAttribute("imageDetailsForm") ImageDetailsForm form,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getAllErrors()
+                    .stream()
+                    .map(error -> error.getDefaultMessage())
+                    .findFirst()
+                    .orElse("이미지 정보를 확인해주세요.");
+
+            redirectAttributes.addFlashAttribute("imageError", message);
+
+            return "redirect:/admin/posts/" + id + "/edit";
+        }
+
+        try {
+            postImageService.updateDetails(id, imageId, form);
+
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "이미지 정보를 수정했습니다."
+            );
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute(
+                    "imageError",
+                    e.getMessage()
+            );
+        }
 
         return "redirect:/admin/posts/" + id + "/edit";
     }

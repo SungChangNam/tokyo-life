@@ -164,4 +164,5 @@ public interface PostMapper {
             @Arg(column = "cover_alt_text", javaType = String.class)
     })
     List<PostListItem> findPublishedList();
+
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import dev.sung.tokyo_life.form.ImageDetailsForm;
 
 import java.util.List;
 
@@ -233,6 +234,58 @@ public class PostImageService {
         if (updatedRows != 1) {
             throw new IllegalStateException(
                     "대표 이미지 변경 결과가 올바르지 않습니다."
+            );
+        }
+    }
+
+    @Transactional
+    public void updateDetails(
+            Long postId,
+            Long imageId,
+            ImageDetailsForm form
+    ) {
+        if (postRepository.lockById(postId) == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "게시글을 찾을 수 없습니다."
+            );
+        }
+
+        String altText = form.getAltText() == null
+                ? null
+                : form.getAltText().strip();
+
+        if (altText != null && altText.length() > 255) {
+            throw new IllegalArgumentException(
+                    "이미지 설명은 255자 이내로 입력해주세요."
+            );
+        }
+
+        Integer displayOrder = form.getDisplayOrder();
+
+        if (displayOrder == null || displayOrder < 0) {
+            throw new IllegalArgumentException(
+                    "표시 순서는 0 이상이어야 합니다."
+            );
+        }
+
+        int updatedRows = postImageRepository.updateDetails(
+                imageId,
+                postId,
+                altText,
+                displayOrder
+        );
+
+        if (updatedRows == 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "이미지를 찾을 수 없습니다."
+            );
+        }
+
+        if (updatedRows != 1) {
+            throw new IllegalStateException(
+                    "이미지 정보 수정 결과가 올바르지 않습니다."
             );
         }
     }
