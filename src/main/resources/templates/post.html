@@ -11,6 +11,13 @@
 <p th:text="${post.content}">게시글 내용</p>
 
 <a href="/">목록으로 돌아가기</a>
-
+<div th:each="image : ${images}">
+    <img th:src="@{/posts/{postId}/images/{imageId}(
+                postId=${post.id},
+                imageId=${image.id}
+            )}"
+         th:alt="${image.altText != null ? image.altText : ''}"
+         style="max-width: 100%; height: auto;">
+</div>
 </body>
 </html>

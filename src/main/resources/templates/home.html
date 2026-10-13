@@ -2,6 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tokyo Life Blog</title>
 </head>
 <body>
@@ -10,7 +11,23 @@
 
 <h2>게시글 목록</h2>
 
-<div th:each="post : ${posts}">
+<p th:if="${#lists.isEmpty(posts)}">
+    공개된 게시글이 없습니다.
+</p>
+
+<article th:each="post : ${posts}">
+    <a th:if="${post.coverImageId != null}"
+       th:href="@{/posts/{id}(id=${post.id})}">
+
+        <img th:src="@{/posts/{postId}/images/{imageId}(
+                    postId=${post.id},
+                    imageId=${post.coverImageId}
+                )}"
+             th:alt="${post.coverAltText != null ? post.coverAltText : ''}"
+             loading="lazy"
+             style="max-width: 300px; width: 100%; height: auto;">
+    </a>
+
     <h3>
         <a th:href="@{/posts/{id}(id=${post.id})}"
            th:text="${post.title}">
@@ -18,9 +35,13 @@
         </a>
     </h3>
 
-    <p th:text="${post.content}">게시글 내용</p>
+    <p th:if="${post.summary != null and !#strings.isEmpty(post.summary)}"
+       th:text="${post.summary}">
+        게시글 요약
+    </p>
+
     <hr>
-</div>
+</article>
 
 </body>
 </html>

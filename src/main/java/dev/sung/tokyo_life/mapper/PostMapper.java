@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Select;
 import dev.sung.tokyo_life.model.AdminPostDetail;
 import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.annotations.Delete;
+import dev.sung.tokyo_life.model.PostListItem;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -133,4 +134,34 @@ public interface PostMapper {
         WHERE id = #{id}
         """)
     int deleteById(@Param("id") Long id);
+
+    @Select("""
+        SELECT id
+        FROM posts
+        WHERE id = #{id}
+        FOR UPDATE
+        """)
+    Long lockById(@Param("id") Long id);
+
+    @Select("""
+        SELECT p.id,
+               p.title,
+               p.summary,
+               i.id AS cover_image_id,
+               i.alt_text AS cover_alt_text
+        FROM posts p
+        LEFT JOIN post_images i
+            ON i.post_id = p.id
+           AND i.is_cover = true
+        WHERE p.status = 'PUBLISHED'
+        ORDER BY p.published_at DESC, p.id DESC
+        """)
+    @ConstructorArgs({
+            @Arg(column = "id", javaType = Long.class, id = true),
+            @Arg(column = "title", javaType = String.class),
+            @Arg(column = "summary", javaType = String.class),
+            @Arg(column = "cover_image_id", javaType = Long.class),
+            @Arg(column = "cover_alt_text", javaType = String.class)
+    })
+    List<PostListItem> findPublishedList();
 }

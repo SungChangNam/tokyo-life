@@ -5,6 +5,7 @@ import dev.sung.tokyo_life.model.Post;
 import org.springframework.stereotype.Repository;
 import dev.sung.tokyo_life.model.AdminPostSummary;
 import dev.sung.tokyo_life.model.AdminPostDetail;
+import dev.sung.tokyo_life.model.PostListItem;
 
 import java.util.List;
 
@@ -69,5 +70,13 @@ public class PostRepository {
 
     public int deleteById(Long id) {
         return postMapper.deleteById(id);
+    }
+
+    public Long lockById(Long id) {
+        return postMapper.lockById(id);
+    }
+
+    public List<PostListItem> findPublishedList() {
+        return postMapper.findPublishedList();
     }
 }

@@ -8,6 +8,16 @@
 <body>
 <h1>게시글 수정</h1>
 
+<p th:if="${message}"
+   th:text="${message}"
+   role="status">
+</p>
+
+<p th:if="${imageError}"
+   th:text="${imageError}"
+   role="alert">
+</p>
+
 <form th:action="@{/admin/posts/{id}/edit(id=${postId})}"
       th:object="${postForm}"
       method="post">
@@ -42,7 +52,6 @@
         <label for="categoryId">카테고리</label>
         <select id="categoryId" th:field="*{categoryId}">
             <option value="">선택 안 함</option>
-
             <option th:each="category : ${categories}"
                     th:value="${category.id}"
                     th:text="${category.name}">
@@ -70,6 +79,87 @@
 
     <button type="submit">수정 저장</button>
 </form>
+
+<hr>
+
+<h2>이미지 관리</h2>
+
+<p>
+    글의 변경 내용을 먼저 수정 저장한 뒤 이미지를 관리하세요.
+    이미지 업로드·삭제·대표 이미지 변경은 즉시 반영됩니다.
+    게시글 수정을 취소해도 되돌아가지 않습니다.
+</p>
+
+<h3>이미지 업로드</h3>
+
+<form th:action="@{/admin/posts/{id}/images(id=${postId})}"
+      method="post"
+      enctype="multipart/form-data">
+
+    <div>
+        <label for="imageFile">이미지 파일</label>
+        <input type="file"
+               id="imageFile"
+               name="file"
+               accept="image/jpeg,image/png"
+               required>
+    </div>
+
+    <div>
+        <label for="altText">이미지 설명</label>
+        <input type="text"
+               id="altText"
+               name="altText"
+               maxlength="255"
+               placeholder="예: 스미다강에서 바라본 도쿄 스카이트리">
+    </div>
+
+    <p>
+        JPEG·PNG, 한 장당 5MB 이하.
+        대표 이미지가 없으면 새 이미지가 대표로 지정됩니다.
+    </p>
+
+    <button type="submit">이미지 업로드</button>
+</form>
+
+<h3>등록된 이미지</h3>
+
+<p th:if="${#lists.isEmpty(images)}">
+    등록된 이미지가 없습니다.
+</p>
+
+<div th:each="image : ${images}">
+    <img th:src="@{/admin/posts/{postId}/images/{imageId}(
+                postId=${postId},
+                imageId=${image.id}
+            )}"
+         th:alt="${image.altText != null ? image.altText : ''}"
+         style="max-width: 300px; width: 100%; height: auto;">
+
+    <p th:text="${image.originalFilename}">파일 이름</p>
+
+    <p th:if="${image.isCover}">대표 이미지</p>
+
+    <form th:unless="${image.isCover}"
+          th:action="@{/admin/posts/{postId}/images/{imageId}/cover(
+                    postId=${postId},
+                    imageId=${image.id}
+                )}"
+          method="post">
+        <button type="submit">대표 이미지로 지정</button>
+    </form>
+
+    <form th:action="@{/admin/posts/{postId}/images/{imageId}/delete(
+                    postId=${postId},
+                    imageId=${image.id}
+                )}"
+          method="post"
+          onsubmit="return confirm('이 이미지를 삭제하시겠습니까?');">
+        <button type="submit">이미지 삭제</button>
+    </form>
+
+    <hr>
+</div>
 
 <p>
     <a th:href="@{/admin/posts}">게시글 목록으로</a>
