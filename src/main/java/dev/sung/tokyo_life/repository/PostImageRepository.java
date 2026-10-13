@@ -52,4 +52,18 @@ public class PostImageRepository {
     public int setCover(Long imageId, Long postId) {
         return postImageMapper.setCover(imageId, postId);
     }
+
+    public int updateDetails(
+            Long imageId,
+            Long postId,
+            String altText,
+            Integer displayOrder
+    ) {
+        return postImageMapper.updateDetails(
+                imageId,
+                postId,
+                altText,
+                displayOrder
+        );
+    }
 }

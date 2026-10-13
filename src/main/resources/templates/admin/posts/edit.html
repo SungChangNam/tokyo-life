@@ -52,6 +52,7 @@
         <label for="categoryId">카테고리</label>
         <select id="categoryId" th:field="*{categoryId}">
             <option value="">선택 안 함</option>
+
             <option th:each="category : ${categories}"
                     th:value="${category.id}"
                     th:text="${category.name}">
@@ -86,7 +87,7 @@
 
 <p>
     글의 변경 내용을 먼저 수정 저장한 뒤 이미지를 관리하세요.
-    이미지 업로드·삭제·대표 이미지 변경은 즉시 반영됩니다.
+    이미지 업로드·삭제·대표 변경·설명 및 순서 수정은 즉시 반영됩니다.
     게시글 수정을 취소해도 되돌아가지 않습니다.
 </p>
 
@@ -106,9 +107,9 @@
     </div>
 
     <div>
-        <label for="altText">이미지 설명</label>
+        <label for="uploadAltText">이미지 설명</label>
         <input type="text"
-               id="altText"
+               id="uploadAltText"
                name="altText"
                maxlength="255"
                placeholder="예: 스미다강에서 바라본 도쿄 스카이트리">
@@ -140,12 +141,49 @@
 
     <p th:if="${image.isCover}">대표 이미지</p>
 
+    <form th:action="@{/admin/posts/{postId}/images/{imageId}/details(
+                    postId=${postId},
+                    imageId=${image.id}
+                )}"
+          method="post">
+
+        <div>
+            <label th:for="${'image-alt-' + image.id}">
+                이미지 설명
+            </label>
+            <input type="text"
+                   th:id="${'image-alt-' + image.id}"
+                   name="altText"
+                   th:value="${image.altText}"
+                   maxlength="255">
+        </div>
+
+        <div>
+            <label th:for="${'image-order-' + image.id}">
+                표시 순서
+            </label>
+            <input type="number"
+                   th:id="${'image-order-' + image.id}"
+                   name="displayOrder"
+                   th:value="${image.displayOrder}"
+                   min="0"
+                   max="2147483647"
+                   step="1"
+                   required>
+        </div>
+
+        <p>작은 숫자부터 표시됩니다. 같으면 이미지 번호순입니다.</p>
+
+        <button type="submit">이미지 정보 저장</button>
+    </form>
+
     <form th:unless="${image.isCover}"
           th:action="@{/admin/posts/{postId}/images/{imageId}/cover(
                     postId=${postId},
                     imageId=${image.id}
                 )}"
           method="post">
+
         <button type="submit">대표 이미지로 지정</button>
     </form>
 
@@ -155,6 +193,7 @@
                 )}"
           method="post"
           onsubmit="return confirm('이 이미지를 삭제하시겠습니까?');">
+
         <button type="submit">이미지 삭제</button>
     </form>
 
