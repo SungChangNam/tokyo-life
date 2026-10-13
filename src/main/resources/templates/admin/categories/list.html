@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>카테고리 관리 | Tokyo Life</title>
+</head>
+<body>
+<h1>카테고리 관리</h1>
+
+<p>
+    <a th:href="@{/admin/categories/new}">카테고리 추가</a>
+</p>
+
+<p>
+    <a th:href="@{/admin}">관리자 홈으로</a>
+</p>
+
+<p th:if="${message}"
+   th:text="${message}"
+   role="status">
+</p>
+
+<p th:if="${categoryError}"
+   th:text="${categoryError}"
+   role="alert">
+</p>
+
+<p th:if="${#lists.isEmpty(categories)}">
+    등록된 카테고리가 없습니다.
+</p>
+
+<table th:unless="${#lists.isEmpty(categories)}">
+    <thead>
+    <tr>
+        <th scope="col">번호</th>
+        <th scope="col">이름</th>
+        <th scope="col">표시 순서</th>
+        <th scope="col">게시글 수</th>
+        <th scope="col">등록 시간</th>
+        <th scope="col">수정 시간</th>
+        <th scope="col">관리</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="category : ${categories}">
+        <td th:text="${category.id}">1</td>
+
+        <td>
+            <a th:href="@{/admin/categories/{id}/edit(id=${category.id})}"
+               th:text="${category.name}">
+                도쿄 생활
+            </a>
+        </td>
+
+        <td th:text="${category.displayOrder}">0</td>
+        <td th:text="${category.postCount}">0</td>
+
+        <td th:text="${#temporals.format(
+                category.createdAt.atZoneSameInstant(
+                    T(java.time.ZoneId).of('Asia/Tokyo')
+                ),
+                'yyyy-MM-dd HH:mm'
+            )}">
+        </td>
+
+        <td th:text="${#temporals.format(
+                category.updatedAt.atZoneSameInstant(
+                    T(java.time.ZoneId).of('Asia/Tokyo')
+                ),
+                'yyyy-MM-dd HH:mm'
+            )}">
+        </td>
+
+        <td>
+            <form th:action="@{/admin/categories/{id}/delete(
+                        id=${category.id}
+                    )}"
+                  method="post"
+                  onsubmit="return confirm('이 카테고리를 삭제하시겠습니까?');">
+
+                <button type="submit"
+                        th:disabled="${category.postCount > 0}">
+                    삭제
+                </button>
+            </form>
+
+            <span th:if="${category.postCount > 0}">
+                사용 중
+            </span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<p>
+    게시글 수에는 공개 글과 임시 저장 글이 모두 포함됩니다.
+    게시글에서 사용 중인 카테고리는 삭제할 수 없습니다.
+</p>
+
+</body>
+</html>
