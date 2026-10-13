@@ -202,4 +202,16 @@ public class PostService {
             );
         }
     }
+
+    @Transactional
+    public void delete(Long id) {
+        int deletedRows = postRepository.deleteById(id);
+
+        if (deletedRows == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.");
+        }
+        if (deletedRows != 1) {
+            throw new IllegalStateException("게시글 삭제 결과 올바르지 않습니다.");
+        }
+    }
 }

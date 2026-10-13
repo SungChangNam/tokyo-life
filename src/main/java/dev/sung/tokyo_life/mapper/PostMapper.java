@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import dev.sung.tokyo_life.model.AdminPostDetail;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Delete;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -126,4 +127,10 @@ public interface PostMapper {
             @Param("content") String content,
             @Param("status") String status
     );
+
+    @Delete("""
+        DELETE FROM posts
+        WHERE id = #{id}
+        """)
+    int deleteById(@Param("id") Long id);
 }
