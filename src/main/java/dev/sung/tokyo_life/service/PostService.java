@@ -2,34 +2,50 @@ package dev.sung.tokyo_life.service;
 
 import dev.sung.tokyo_life.form.PostCreateForm;
 import dev.sung.tokyo_life.mapper.UserMapper;
+import dev.sung.tokyo_life.model.AdminPostDetail;
+import dev.sung.tokyo_life.model.AdminPostSummary;
 import dev.sung.tokyo_life.model.AdminUser;
 import dev.sung.tokyo_life.model.Post;
+import dev.sung.tokyo_life.model.PostImage;
 import dev.sung.tokyo_life.repository.CategoryRepository;
+import dev.sung.tokyo_life.repository.PostImageRepository;
 import dev.sung.tokyo_life.repository.PostRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
-import dev.sung.tokyo_life.model.AdminPostSummary;
-import dev.sung.tokyo_life.model.AdminPostDetail;
+import dev.sung.tokyo_life.model.PostListItem;
 
 import java.util.List;
 
 @Service
 public class PostService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(PostService.class);
+
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
     private final UserMapper userMapper;
+    private final PostImageRepository postImageRepository;
+    private final ImageStorageService imageStorageService;
 
     public PostService(
             PostRepository postRepository,
             CategoryRepository categoryRepository,
-            UserMapper userMapper
+            UserMapper userMapper,
+            PostImageRepository postImageRepository,
+            ImageStorageService imageStorageService
     ) {
         this.postRepository = postRepository;
         this.categoryRepository = categoryRepository;
         this.userMapper = userMapper;
+        this.postImageRepository = postImageRepository;
+        this.imageStorageService = imageStorageService;
     }
 
     public List<Post> findAll() {
@@ -88,7 +104,6 @@ public class PostService {
                 && (categoryId == null
                 || form.getContent() == null
                 || form.getContent().isBlank())) {
-
             throw new IllegalArgumentException(
                     "공개하려면 카테고리와 본문을 입력해주세요."
             );
@@ -110,9 +125,11 @@ public class PostService {
             );
         }
     }
+
     public List<AdminPostSummary> findAllForAdmin() {
         return postRepository.findAllForAdmin();
     }
+
     public PostCreateForm getEditForm(Long id) {
 
         AdminPostDetail post = postRepository.findByIdForAdmin(id);
@@ -205,13 +222,51 @@ public class PostService {
 
     @Transactional
     public void delete(Long id) {
+
+        // 이미지 업로드·삭제와 동일한 게시글 잠금 사용
+        if (postRepository.lockById(id) == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "게시글을 찾을 수 없습니다."
+            );
+        }
+
+        // CASCADE로 기록이 삭제되기 전에 이미지 정보 확보
+        List<PostImage> images = postImageRepository.findByPostId(id);
+
         int deletedRows = postRepository.deleteById(id);
 
-        if (deletedRows == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다.");
-        }
         if (deletedRows != 1) {
-            throw new IllegalStateException("게시글 삭제 결과 올바르지 않습니다.");
+            throw new IllegalStateException(
+                    "게시글 삭제 결과가 올바르지 않습니다."
+            );
         }
+
+        // DB 삭제가 커밋된 뒤 실제 이미지 파일 정리
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+
+                        for (PostImage image : images) {
+                            try {
+                                imageStorageService.delete(
+                                        image.storageKey()
+                                );
+                            } catch (RuntimeException e) {
+                                log.error(
+                                        "게시글 삭제 후 이미지 파일 정리 실패: {}",
+                                        image.storageKey(),
+                                        e
+                                );
+                            }
+                        }
+                    }
+                }
+        );
+    }
+
+    public List<PostListItem> findPublishedList() {
+        return postRepository.findPublishedList();
     }
 }
