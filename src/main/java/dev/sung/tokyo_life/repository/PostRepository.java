@@ -66,4 +66,8 @@ public class PostRepository {
                 status
         );
     }
+
+    public int deleteById(Long id) {
+        return postMapper.deleteById(id);
+    }
 }

@@ -119,4 +119,19 @@ public class AdminPostController {
 
         return "redirect:/admin/posts";
     }
+
+    @PostMapping("/{id}/delete")
+    public String delete(
+            @PathVariable("id") Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        postService.delete(id);
+
+        redirectAttributes.addFlashAttribute(
+                "message",
+                "게시글을 삭제했습니다."
+        );
+
+        return "redirect:/admin/posts";
+    }
 }
