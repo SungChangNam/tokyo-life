@@ -269,4 +269,22 @@ public class PostService {
     public List<PostListItem> findPublishedList() {
         return postRepository.findPublishedList();
     }
+
+    public List<PostListItem> findPublishedList(Long categoryId) {
+
+        // 카테고리를 선택하지 않으면 전체 공개 글 조회
+        if (categoryId == null) {
+            return postRepository.findPublishedList();
+        }
+
+        if (categoryId <= 0
+                || !categoryRepository.existsById(categoryId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "카테고리를 찾을 수 없습니다."
+            );
+        }
+
+        return postRepository.findPublishedListByCategoryId(categoryId);
+    }
 }

@@ -165,4 +165,28 @@ public interface PostMapper {
     })
     List<PostListItem> findPublishedList();
 
+    @Select("""
+        SELECT p.id,
+               p.title,
+               p.summary,
+               i.id AS cover_image_id,
+               i.alt_text AS cover_alt_text
+        FROM posts p
+        LEFT JOIN post_images i
+            ON i.post_id = p.id
+           AND i.is_cover = true
+        WHERE p.status = 'PUBLISHED'
+          AND p.category_id = #{categoryId}
+        ORDER BY p.published_at DESC, p.id DESC
+        """)
+    @ConstructorArgs({
+            @Arg(column = "id", javaType = Long.class, id = true),
+            @Arg(column = "title", javaType = String.class),
+            @Arg(column = "summary", javaType = String.class),
+            @Arg(column = "cover_image_id", javaType = Long.class),
+            @Arg(column = "cover_alt_text", javaType = String.class)
+    })
+    List<PostListItem> findPublishedListByCategoryId(
+            @Param("categoryId") Long categoryId
+    );
 }
