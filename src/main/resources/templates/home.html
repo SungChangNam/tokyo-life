@@ -9,6 +9,32 @@
 
 <h1>Tokyo Life Blog</h1>
 
+<nav aria-label="카테고리">
+    <ul>
+        <li>
+            <a th:href="@{/}"
+               th:attr="aria-current=${selectedCategoryId == null
+                   ? 'page' : null}">
+                전체
+            </a>
+            <span th:if="${selectedCategoryId == null}">선택됨</span>
+        </li>
+
+        <li th:each="category : ${categories}">
+            <a th:href="@{/(categoryId=${category.id})}"
+               th:text="${category.name}"
+               th:attr="aria-current=${selectedCategoryId == category.id
+                   ? 'page' : null}">
+                카테고리
+            </a>
+
+            <span th:if="${selectedCategoryId == category.id}">
+                선택됨
+            </span>
+        </li>
+    </ul>
+</nav>
+
 <h2>게시글 목록</h2>
 
 <p th:if="${#lists.isEmpty(posts)}">
