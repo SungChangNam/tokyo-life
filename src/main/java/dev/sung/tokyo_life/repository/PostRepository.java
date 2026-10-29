@@ -25,7 +25,7 @@ public class PostRepository {
     public Post findById(Long id) {
         return postMapper.findById(id);
     }
-    public int insert(
+    public Long insert(
             Long authorId,
             Long categoryId,
             String title,
@@ -89,5 +89,23 @@ public class PostRepository {
             String keyword
     ) {
         return postMapper.searchPublishedList(categoryId, keyword);
+    }
+
+    public List<PostListItem> findPublishedPage(
+            Long categoryId,
+            String keyword,
+            int limit,
+            long offset
+    ) {
+        return postMapper.findPublishedPage(
+                categoryId,
+                keyword,
+                limit,
+                offset
+        );
+    }
+
+    public long countPublished(Long categoryId, String keyword) {
+        return postMapper.countPublished(categoryId, keyword);
     }
 }

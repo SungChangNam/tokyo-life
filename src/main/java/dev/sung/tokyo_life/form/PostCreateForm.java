@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostCreateForm {
 
@@ -38,6 +41,13 @@ public class PostCreateForm {
                 && content != null
                 && !content.isBlank();
     }
+
+    @Size(max = 20, message = "태그는 최대 20개까지 선택해주세요.")
+    private List<
+            @NotNull(message = "올바른 태그를 선택해주세요.")
+            @Positive(message = "올바른 태그를 선택해주세요.")
+                    Long
+            > tagIds = new ArrayList<>();
 
     public String getTitle() {
         return title;
@@ -78,4 +88,13 @@ public class PostCreateForm {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public List<Long> getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(List<Long> tagIds) {
+        this.tagIds = tagIds;
+    }
+
 }

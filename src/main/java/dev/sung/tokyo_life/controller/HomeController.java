@@ -1,5 +1,6 @@
 package dev.sung.tokyo_life.controller;
 
+import dev.sung.tokyo_life.model.PostPage;
 import dev.sung.tokyo_life.service.CategoryService;
 import dev.sung.tokyo_life.service.PostService;
 import org.springframework.stereotype.Controller;
@@ -27,19 +28,22 @@ public class HomeController {
             Long categoryId,
             @RequestParam(value = "keyword", required = false)
             String keyword,
+            @RequestParam(value = "page", defaultValue = "1")
+            int page,
             Model model
     ) {
         String normalizedKeyword = keyword == null
                 ? ""
                 : keyword.strip();
 
-        model.addAttribute(
-                "posts",
-                postService.searchPublishedList(
-                        categoryId,
-                        normalizedKeyword
-                )
+        PostPage postPage = postService.findPublishedPage(
+                categoryId,
+                normalizedKeyword,
+                page
         );
+
+        model.addAttribute("posts", postPage.posts());
+        model.addAttribute("postPage", postPage);
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("keyword", normalizedKeyword);

@@ -2,22 +2,40 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>게시글 상세</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${post.title + ' | Tokyo Life'}">게시글 상세</title>
 </head>
 <body>
 
 <h1 th:text="${post.title}">게시글 제목</h1>
 
-<p th:text="${post.content}">게시글 내용</p>
+<p th:text="${post.content}"
+   style="white-space: pre-wrap;">게시글 내용</p>
 
-<a href="/">목록으로 돌아가기</a>
+<section th:unless="${#lists.isEmpty(tags)}"
+         aria-label="게시글 태그">
+    <h2>태그</h2>
+
+    <ul>
+        <li th:each="tag : ${tags}">
+            <span th:text="${'#' + tag.name}">#라멘</span>
+        </li>
+    </ul>
+</section>
+
 <div th:each="image : ${images}">
     <img th:src="@{/posts/{postId}/images/{imageId}(
                 postId=${post.id},
                 imageId=${image.id}
             )}"
          th:alt="${image.altText != null ? image.altText : ''}"
+         loading="lazy"
          style="max-width: 100%; height: auto;">
 </div>
+
+<p>
+    <a th:href="@{/}">목록으로 돌아가기</a>
+</p>
+
 </body>
 </html>

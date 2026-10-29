@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
+import dev.sung.tokyo_life.service.TagService;
 
 @Controller
 public class PostController {
@@ -22,15 +23,18 @@ public class PostController {
     private final PostService postService;
     private final PostImageService postImageService;
     private final ImageStorageService imageStorageService;
+    private final TagService tagService;
 
     public PostController(
             PostService postService,
             PostImageService postImageService,
-            ImageStorageService imageStorageService
+            ImageStorageService imageStorageService,
+            TagService tagService
     ) {
         this.postService = postService;
         this.postImageService = postImageService;
         this.imageStorageService = imageStorageService;
+        this.tagService = tagService;
     }
 
     @GetMapping("/posts/{id}")
@@ -38,6 +42,7 @@ public class PostController {
             @PathVariable("id") Long id,
             Model model
     ) {
+        // 공개된 게시글인지 먼저 확인
         Post post = postService.findById(id);
 
         model.addAttribute("post", post);
@@ -45,6 +50,7 @@ public class PostController {
                 "images",
                 postImageService.findByPublishedPostId(id)
         );
+        model.addAttribute("tags", tagService.findByPostId(id));
 
         return "post";
     }
