@@ -83,4 +83,11 @@ public class PostRepository {
     public List<PostListItem> findPublishedListByCategoryId(Long categoryId) {
         return postMapper.findPublishedListByCategoryId(categoryId);
     }
+
+    public List<PostListItem> searchPublishedList(
+            Long categoryId,
+            String keyword
+    ) {
+        return postMapper.searchPublishedList(categoryId, keyword);
+    }
 }

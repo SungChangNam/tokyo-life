@@ -287,4 +287,34 @@ public class PostService {
 
         return postRepository.findPublishedListByCategoryId(categoryId);
     }
+
+    public List<PostListItem> searchPublishedList(
+            Long categoryId,
+            String keyword
+    ) {
+        if (categoryId != null
+                && (categoryId <= 0
+                || !categoryRepository.existsById(categoryId))) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "카테고리를 찾을 수 없습니다."
+            );
+        }
+
+        String normalizedKeyword = keyword == null
+                ? ""
+                : keyword.strip();
+
+        if (normalizedKeyword.length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "검색어는 100자 이내로 입력해주세요."
+            );
+        }
+
+        return postRepository.searchPublishedList(
+                categoryId,
+                normalizedKeyword
+        );
+    }
 }

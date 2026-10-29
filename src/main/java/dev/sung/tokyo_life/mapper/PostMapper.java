@@ -189,4 +189,50 @@ public interface PostMapper {
     List<PostListItem> findPublishedListByCategoryId(
             @Param("categoryId") Long categoryId
     );
+
+    @Select("""
+        <script>
+        SELECT p.id,
+               p.title,
+               p.summary,
+               i.id AS cover_image_id,
+               i.alt_text AS cover_alt_text
+        FROM posts p
+        LEFT JOIN post_images i
+            ON i.post_id = p.id
+           AND i.is_cover = true
+        WHERE p.status = 'PUBLISHED'
+
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                strpos(lower(p.title), lower(#{keyword})) > 0
+                OR strpos(
+                    lower(COALESCE(p.summary, '')),
+                    lower(#{keyword})
+                ) > 0
+                OR strpos(
+                    lower(COALESCE(p.content, '')),
+                    lower(#{keyword})
+                ) > 0
+            )
+        </if>
+
+        ORDER BY p.published_at DESC, p.id DESC
+        </script>
+        """)
+    @ConstructorArgs({
+            @Arg(column = "id", javaType = Long.class, id = true),
+            @Arg(column = "title", javaType = String.class),
+            @Arg(column = "summary", javaType = String.class),
+            @Arg(column = "cover_image_id", javaType = Long.class),
+            @Arg(column = "cover_alt_text", javaType = String.class)
+    })
+    List<PostListItem> searchPublishedList(
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword
+    );
 }

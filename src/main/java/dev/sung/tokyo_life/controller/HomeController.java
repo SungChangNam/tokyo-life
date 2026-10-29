@@ -25,14 +25,24 @@ public class HomeController {
     public String home(
             @RequestParam(value = "categoryId", required = false)
             Long categoryId,
+            @RequestParam(value = "keyword", required = false)
+            String keyword,
             Model model
     ) {
+        String normalizedKeyword = keyword == null
+                ? ""
+                : keyword.strip();
+
         model.addAttribute(
                 "posts",
-                postService.findPublishedList(categoryId)
+                postService.searchPublishedList(
+                        categoryId,
+                        normalizedKeyword
+                )
         );
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("keyword", normalizedKeyword);
 
         return "home";
     }

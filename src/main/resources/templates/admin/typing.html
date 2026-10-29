@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 JLPT & IT 타자연습 PRO</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+        * { box-sizing: border-box; font-family: 'Pretendard', 'Meiryo', 'Yu Gothic', sans-serif; }
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-dark); color: var(--text-main);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .app-container {
+            width: 100%; max-width: 950px;
+            background: var(--panel-bg); border-radius: 16px;
+            padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #334155; padding-bottom: 16px; margin-bottom: 20px;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .title { font-size: 1.3rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        select, .btn, input[type="password"] {
+            background: #0f172a; color: var(--text-main); border: 1px solid #475569;
+            padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        select:hover, .btn:hover { border-color: var(--accent); }
+        .btn.active { background: var(--accent); color: #0f172a; font-weight: 700; border-color: var(--accent); }
+        .btn-ai { background: linear-gradient(135deg, #6366f1, #a855f7); border: none; color: white; font-weight: 700; }
+        .btn-ai:hover { opacity: 0.9; }
+
+        .api-panel {
+            background: #0b0f19; padding: 10px 14px; border-radius: 8px;
+            margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px dashed #475569; font-size: 0.85rem;
+        }
+        .api-panel input { width: 220px; }
+
+        .dashboard {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #0f172a; padding: 14px 18px; border-radius: 12px;
+            border: 1px solid #334155; text-align: center;
+        }
+        .stat-label { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+        .speed-bar-wrap { width: 100%; height: 6px; background: #334155; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .speed-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #4ade80); transition: width 0.2s; }
+
+        .typing-stage {
+            background: #0f172a; border-radius: 14px; padding: 32px 24px;
+            text-align: center; border: 1px solid #334155; margin-bottom: 20px; position: relative;
+            min-height: 210px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .badge-step {
+            display: inline-block; background: #334155; color: #e2e8f0;
+            padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 14px;
+        }
+
+        .kanji-display {
+            font-size: 2.1rem; font-weight: 700; margin-bottom: 14px; line-height: 2.7;
+            word-break: keep-all; max-width: 850px; text-align: center;
+        }
+        ruby { ruby-align: center; ruby-position: over; }
+        rt { font-size: 0.95rem; color: #38bdf8; font-weight: normal; line-height: 1.15; }
+        .romaji-title { color: #94a3b8; font-size: 0.76rem; letter-spacing: 0; margin-bottom: 5px; }
+        .romaji-guide { width: 100%; }
+        .romaji-guide.is-hidden .romaji-display { filter: blur(7px); user-select: none; }
+        .romaji-guide.is-hidden:hover .romaji-display { filter: blur(0); }
+        .ime-progress { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; min-height: 26px; overflow-wrap: anywhere; margin: 0 0 12px; }
+        .ime-progress[hidden] { display: none; }
+        .stat-card.success-metric .stat-value { color: var(--accent-green); }
+        .stat-card.error-metric .stat-value { color: var(--accent-red); }
+        .practice-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 13px 16px; background: #0f172a; border-radius: 12px; border: 1px solid #334155; margin-bottom: 18px; }
+        .practice-toolbar label { display: flex; align-items: center; gap: 7px; font-size: 0.84rem; color: #cbd5e1; }
+        .practice-toolbar label.option { cursor: pointer; }
+        .practice-toolbar input[type="checkbox"] { accent-color: #38bdf8; width: 16px; height: 16px; }
+        .practice-toolbar select { max-width: 160px; }
+        .practice-toolbar .tool-buttons { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+        .goal-wrap { height: 5px; background: #334155; overflow: hidden; border-radius: 6px; margin-bottom: 16px; }
+        .goal-bar { height: 100%; background: #4ade80; width: 0%; transition: width 0.2s; }
+        .feedback { min-height: 24px; margin-top: 10px; font-size: 0.88rem; color: var(--text-sub); }
+        .feedback.error { color: var(--accent-red); }
+        .feedback.success { color: var(--accent-green); }
+        #typing-input.wrong-flash { border-color: var(--accent-red); box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
+        .keyboard-help { margin-top: 6px; font-size: 0.75rem; color: #94a3b8; }
+        .modal .result-detail { color: #cbd5e1; font-size: 0.88rem; line-height: 1.6; }
+
+        .romaji-display {
+            font-size: 1.15rem; font-family: 'Consolas', monospace;
+            letter-spacing: 1.5px; margin-bottom: 14px; min-height: 26px; color: #94a3b8;
+            word-break: break-all; max-width: 850px;
+        }
+        .meaning-display {
+            font-size: 0.95rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1);
+            display: inline-block; padding: 6px 16px; border-radius: 8px; max-width: 850px;
+        }
+
+        .char-correct { color: var(--accent-green); }
+        .char-wrong { color: var(--accent-red); background: rgba(248, 113, 113, 0.2); border-radius: 3px; }
+        .char-current { border-bottom: 3px solid var(--accent); color: #fff; }
+        .char-pending { color: #64748b; }
+
+        .input-box { width: 100%; position: relative; }
+        #typing-input {
+            width: 100%; padding: 16px 20px; font-size: 1.3rem;
+            background: #0f172a; color: #fff; border: 2px solid var(--accent);
+            border-radius: 12px; outline: none; text-align: center;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+        #typing-input:focus { border-color: var(--accent-green); }
+        .mode-guide {
+            margin-top: 10px; font-size: 0.85rem; color: var(--text-sub);
+            display: flex; justify-content: space-between;
+        }
+
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--panel-bg); padding: 32px; border-radius: 16px;
+            width: 90%; max-width: 450px; text-align: center; border: 1px solid var(--accent);
+        }
+        .modal-content h2 { margin-top: 0; color: var(--accent); }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+
+        .loading-overlay {
+            display: none; position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85);
+            justify-content: center; align-items: center; border-radius: 14px; flex-direction: column; gap: 10px;
+            z-index: 10; font-weight: bold; color: var(--accent);
+        }
+
+        .api-panel { flex-wrap: wrap; gap: 10px; }
+        .api-help { width: 100%; color: var(--text-sub); font-size: 0.74rem; line-height: 1.5; }
+        .status-panel { margin: -3px 0 16px; font-size: 0.86rem; line-height: 1.5; color: var(--text-sub); min-height: 1.4em; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .status-panel.success { color: var(--accent-green); }
+        .status-panel.error { color: var(--accent-red); }
+        .status-panel.working { color: var(--accent); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        @media (max-width: 620px) {
+            body { padding: 8px; } .app-container { padding: 16px; }
+            .api-panel input { width: 180px; max-width: 100%; }
+            .dashboard { grid-template-columns: repeat(2, 1fr); }
+            .practice-toolbar .tool-buttons { width: 100%; margin-left: 0; }
+            .practice-toolbar select { max-width: 130px; }
+            .typing-stage { padding: 22px 12px; }
+            .kanji-display { font-size: 1.5rem; }
+        }
+        @media (min-width: 621px) { .dashboard { grid-template-columns: repeat(3, 1fr); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="title">⌨️ JLPT & IT 타자연습 PRO</div>
+        <div class="controls">
+            <select id="category-select" onchange="changeCategory()">
+                <optgroup label="💼 일본 IT 현장 실무">
+                    <option value="IT_WORD">IT 필수 단어/용어</option>
+                    <option value="IT_COMMENT">IT 주석 및 사양서 구문</option>
+                    <option value="IT_LONG">IT 비즈니스 메일 및 장애 보고 (장문)</option>
+                </optgroup>
+                <optgroup label="📘 JLPT 기출 학습">
+                    <option value="JLPT_N3_WORD">JLPT N3 필수 단어</option>
+                    <option value="JLPT_N3_SENT">JLPT N3 문법/예문</option>
+                    <option value="JLPT_N2_WORD">JLPT N2 필수 단어</option>
+                    <option value="JLPT_N2_LONG">JLPT N2 기출 독해 (장문)</option>
+                    <option value="JLPT_N1_WORD">JLPT N1 필수 단어</option>
+                    <option value="JLPT_N1_LONG">JLPT N1 기출 독해 (장문)</option>
+                </optgroup>
+            </select>
+            <button class="btn btn-ai" id="btn-generate" onclick="generateAIProblems()">✨ AI로 새 문제 10개 생성</button>
+            <button class="btn" id="btn-shuffle" onclick="reshuffleCurrentProblems()">🔀 순서 섞기</button>
+            <button class="btn active" id="btn-mode1" onclick="setMode('MODE_1')">로마자 직타</button>
+            <button class="btn" id="btn-mode2" onclick="setMode('MODE_2')">IME 한자변환</button>
+        </div>
+    </div>
+
+    <div class="api-panel">
+        <span>🔑 Gemini API 키 입력:</span>
+        <div style="display: flex; gap: 6px;">
+            <input type="password" id="api-key-input" placeholder="Google AI Studio API 키">
+            <button class="btn" onclick="saveApiKey()" style="padding: 6px 10px;">저장</button>
+            <button class="btn" onclick="clearApiKey()" style="padding: 6px 10px;">삭제</button>
+        </div>
+        <div class="api-help">API 없이도 기본 문제를 연습할 수 있습니다. AI 버튼을 누르면 선택한 카테고리의 새 문제를 생성합니다. 저장한 API 키는 브라우저 로컬 저장소에 보관되므로 개인 PC에서만 사용하세요. 모델·계정에 따라 API 요금이 발생할 수 있습니다.</div>
+    </div>
+    <div class="status-panel" id="status-panel" role="status" aria-live="polite">기본 문제를 무작위 순서로 연습합니다. 새 문제 생성은 API 키 입력 후 AI 버튼을 누르세요.</div>
+
+    <div class="practice-toolbar" aria-label="타자 연습 설정">
+        <label>연습 시간
+            <select id="duration-select" onchange="changePracticeSettings()">
+                <option value="0">무제한 연습</option>
+                <option value="60">1분 챌린지</option>
+                <option value="180">3분 챌린지</option>
+                <option value="300">5분 챌린지</option>
+            </select>
+        </label>
+        <label>목표 속도
+            <select id="goal-select" onchange="updateStats()">
+                <option value="100">100자/분</option>
+                <option value="200" selected>200자/분</option>
+                <option value="300">300자/분</option>
+                <option value="400">400자/분</option>
+            </select>
+        </label>
+        <label class="option"><input type="checkbox" id="strict-mode"> 오타 입력 차단 (로마자)</label>
+        <label class="option"><input type="checkbox" id="show-romaji" checked onchange="renderTargetText(inputEl.value)"> 로마자 힌트</label>
+        <label class="option"><input type="checkbox" id="require-kanji" checked> 한자변환 필수</label>
+        <label class="option"><input type="checkbox" id="sound-enabled" checked> 효과음</label>
+        <div class="tool-buttons">
+            <button class="btn" onclick="skipProblem()" title="현재 문제를 건너뛰되, 건너뛰기 기록에 포함합니다">⏭ 건너뛰기</button>
+            <button class="btn" onclick="restartSession()" title="현재 연습 기록과 타이머를 초기화합니다">↻ 기록 초기화</button>
+        </div>
+    </div>
+    <div class="dashboard">
+        <div class="stat-card">
+            <div class="stat-label">실시간 속도 (자/분)</div>
+            <div class="stat-value" id="current-cpm">0</div>
+            <div class="speed-bar-wrap"><div class="speed-bar" id="speed-bar"></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">최고 기록 (자/분)</div>
+            <div class="stat-value" id="max-cpm">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">정확도 (%)</div>
+            <div class="stat-value" id="accuracy">100%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">진행 번호</div>
+            <div class="stat-value" id="progress">1 / 5</div>
+        </div>
+        <div class="stat-card error-metric">
+            <div class="stat-label">누적 오타</div>
+            <div class="stat-value" id="error-count">0</div>
+        </div>
+        <div class="stat-card success-metric">
+            <div class="stat-label" id="time-label">경과 시간</div>
+            <div class="stat-value" id="time-display">00:00</div>
+        </div>
+    </div>
+    <div class="goal-wrap" role="progressbar" aria-label="목표 속도 달성도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="goal-wrap"><div class="goal-bar" id="goal-bar"></div></div>
+
+    <div class="typing-stage">
+        <div class="loading-overlay" id="loading-overlay">
+            <div>✨ AI가 맞춤형 문제를 생성하고 있습니다...</div>
+            <div style="font-size: 0.8rem; color: var(--text-sub);">API 응답을 확인하는 중입니다. 완료되면 문제가 바뀝니다.</div>
+        </div>
+        <div class="badge-step" id="stage-badge">일본 IT 현장 실무 - 단어 버전</div>
+
+        <div class="kanji-display" id="kanji-display"></div>
+        <div class="romaji-guide" id="romaji-guide">
+            <div class="romaji-title">ROMAJI · 일본어 읽기</div>
+            <div class="romaji-display" id="romaji-display"></div>
+        </div>
+        <div class="ime-progress" id="ime-progress" hidden></div>
+        <div class="meaning-display" id="meaning-display"></div>
+    </div>
+
+    <div class="input-box">
+        <input type="text" id="typing-input" placeholder="여기를 클릭하고 타이핑을 시작하세요..." autocomplete="off" spellcheck="false" autofocus>
+        <div class="mode-guide">
+            <span id="mode-desc">💡 [로마자 직타] 화면의 알파벳을 치세요. (타이핑/성공 사운드 적용)</span>
+            <span>[ESC] 현재 입력 지우기 · [Enter] 정답 제출 (IME)</span>
+        </div>
+        <div class="feedback" id="typing-feedback" role="status" aria-live="polite">로마자 모드는 정답을 완성하면 자동 이동하고, IME 모드는 Enter로 제출합니다.</div>
+        <div class="keyboard-help">실수를 고쳐도 누적 오타는 남아 정확도에 반영됩니다. 붙여넣기는 차단됩니다. IME 모드는 변환 확정 후 Enter로 제출하세요.</div>
+    </div>
+</div>
+
+<div class="modal" id="result-modal">
+    <div class="modal-content">
+        <h2>🎉 스테이지 클리어!</h2>
+        <div class="result-grid">
+            <div class="stat-card">
+                <div class="stat-label">평균 속도</div>
+                <div class="stat-value" id="final-cpm">0타</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">누적 정확도</div>
+                <div class="stat-value" id="final-acc">100%</div>
+            </div>
+        </div>
+        <div class="result-detail" id="result-detail"></div>
+        <button class="btn active" onclick="closeModalAndReload()" style="width: 100%; padding: 12px;">계속 연습하기 (AI 사용 중이면 새 문제 생성)</button>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (!document.getElementById("sound-enabled")?.checked) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        } else if (type === 'success') {
+            const now = audioCtx.currentTime;
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination);
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0.08, now + idx * 0.08);
+                g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.15);
+                o.start(now + idx * 0.08);
+                o.stop(now + idx * 0.08 + 0.15);
+            });
+        }
+    }
+
+    let PROBLEM_DB = {
+        IT_WORD: [
+            { pairs: [{k:"実装", h:"じっそう"}], romaji: "jissou", meaning: "[IT 단어] 구현 (Implementation)" },
+            { pairs: [{k:"仕様書", h:"しようしょ"}], romaji: "shiyousho", meaning: "[IT 단어] 사양서 / 설계서" },
+            { pairs: [{k:"引数", h:"ひきすう"}], romaji: "hikisuu", meaning: "[IT 단어] 매개변수 (Parameter)" },
+            { pairs: [{k:"戻り値", h:"もどりち"}], romaji: "modorichi", meaning: "[IT 단어] 반환값 (Return Value)" },
+            { pairs: [{k:"排他制御", h:"はいたせいぎょ"}], romaji: "haitaseigyo", meaning: "[IT 단어] 배타 제어 (Concurrency Lock)" }
+        ],
+        IT_COMMENT: [
+            { pairs: [{k:"ビジネスロジック", h:"びじねすろじっく"}, {k:"の", h:"の"}, {k:"実行", h:"じっこう"}], romaji: "bijinesurojikkunojikkou", meaning: "[IT 주석] 비즈니스 로직의 실행" },
+            { pairs: [{k:"任意項目", h:"にんいこうもく"}, {k:"NULL", h:"ぬる"}, {k:"⇒", h:"やじるし"}, {k:"空文字", h:"からもち"}, {k:"に", h:"に"}, {k:"変換", h:"へんかん"}], romaji: "ninikoumokunurukaramojihenkan", meaning: "[IT 주석] 임의 항목 NULL을 빈 문자열로 변환" },
+            { pairs: [{k:"本番環境", h:"ほんばんかんきょう"}, {k:"へ", h:"へ"}, {k:"デプロイ", h:"でぷろい"}, {k:"する", h:"する"}], romaji: "honbankankyouhedepuroisuru", meaning: "[IT 주석] 운영 환경에 배포하다" }
+        ],
+        IT_LONG: [
+            { pairs: [{k:"お", h:"お"}, {k:"疲れ様", h:"つかれさま"}, {k:"です。", h:"です。"}, {k:"修正", h:"しゅうせい"}, {k:"が", h:"が"}, {k:"完了", h:"かんりょう"}, {k:"しました", h: "しました"}, {k:"ので", h:"ので"}, {k:"ご確認", h:"ごかくにん"}, {k:"を", h:"を"}, {k:"お願い", h:"おねがい"}, {k:"いたし", h:"いたし"}, {k:"ます。", h:"ます。"}], romaji: "otsukaresamadesu.shuuseigakanryoushimashitanodegokakuninwoonegaiitashimasu.", meaning: "[IT 장문] 수고하십니다. 수정이 완료되었으니 확인 부탁드립니다." },
+            { pairs: [{k:"原因", h:"げんいん"}, {k:"を", h:"を"}, {k:"調査", h:"ちょうさ"}, {k:"した", h:"した"}, {k:"ところ、", h:"ところ、"}, {k:"接続", h:"せつぞく"}, {k:"タイムアウト", h:"たいむあうと"}, {k:"が", h:"が"}, {k:"判明", h:"はんめい"}, {k:"しました。", h:"しました。"}], romaji: "geninwochousashitatokoro,tsuzokutaimuautogahanmeishimashita.", meaning: "[IT 장문] 원인을 조사한 결과, 접속 타임아웃이 판명되었습니다." }
+        ],
+        JLPT_N3_WORD: [
+            { pairs: [{k:"把握", h:"はあく"}], romaji: "haaku", meaning: "[JLPT N3 단어] 파악" },
+            { pairs: [{k:"妥協", h:"だきょう"}], romaji: "dakyou", meaning: "[JLPT N3 단어] 타협" },
+            { pairs: [{k:"迅速", h:"じんそく"}], romaji: "jinsoku", meaning: "[JLPT N3 단어] 신속" }
+        ],
+        JLPT_N3_SENT: [
+            { pairs: [{k:"努力", h:"どりょく"}, {k:"した", h:"した"}, {k:"わりに", h:"わりに"}, {k:"は", h:"は"}, {k:"結果", h:"けっか"}, {k:"が", h:"が"}, {k:"出", h:"で"}, {k:"なかった", h:"なかった"}], romaji: "doryokushitawarinihakekkagadenakatta", meaning: "[JLPT N3 문법] 노력한 것에 비해서는 결과가 안 나왔다" }
+        ],
+        JLPT_N2_WORD: [
+            { pairs: [{k:"懸念", h:"けねん"}], romaji: "kenen", meaning: "[JLPT N2 단어] 우려, 염려" },
+            { pairs: [{k:"前提", h:"ぜんてい"}], romaji: "zentei", meaning: "[JLPT N2 단어] 전제" },
+            { pairs: [{k:"促進", h:"そくしん"}], romaji: "sokushin", meaning: "[JLPT N2 단어] 촉진" }
+        ],
+        JLPT_N2_LONG: [
+            { pairs: [{k:"どんなに", h:"どんなに"}, {k:"優", h:"すぐれ"}, {k:"た", h:"た"}, {k:"計画", h:"けいかく"}, {k:"であっても、", h:"であっても、"}, {k:"実行", h:"じっこう"}, {k:"に", h:"に"}, {k:"移", h:"うつ"}, {k:"さ", h:"さ"}, {k:"なければ", h:"なければ"}, {k:"意味", h:"いみ"}, {k:"が", h:"が"}, {k:"ない。", h:"ない。"}], romaji: "donnanisuguretakeikakudeattemo,jikkouniutsusanakerebaimiganai.", meaning: "[JLPT N2 독해 장문] 아무리 뛰어난 계획이라도 실행하지 않으면 의미가 없다." }
+        ],
+        JLPT_N1_WORD: [
+            { pairs: [{k:"諸刃", h:"もろは"}], romaji: "moroha", meaning: "[JLPT N1 단어] 양날" },
+            { pairs: [{k:"払拭", h:"ふっしょく"}], romaji: "fusshoku", meaning: "[JLPT N1 단어] 말끔히 씻어버림, 불식" },
+            { pairs: [{k:"醍醐味", h:"だいごみ"}], romaji: "daigomi", meaning: "[JLPT N1 단어] 진수, 묘미" }
+        ],
+        JLPT_N1_LONG: [
+            { pairs: [{k:"技術", h:"ぎじゅつ"}, {k:"の", h:"の"}, {k:"進歩", h:"しんぽ"}, {k:"に伴い、", h:"にともない、"}, {k:"働き方", h:"はたらきかた"}, {k:"も", h:"も"}, {k:"大きく", h:"おおきく"}, {k:"変化", h:"へんか"}, {k:"している。", h:"している。"}], romaji: "gijutsunoshinponitomonai,watashitachinohatarakikatamoookikuhenkashiteiru.", meaning: "[JLPT N1 독해 장문] 기술의 진보에 따라 일하는 방식도 크게 변화하고 있다." }
+        ]
+    };
+
+
+    // 추가 기본 문제. API 없이도 카테고리별 다양한 연습이 가능하도록 준비한 샘플입니다.
+    const EXTRA_PROBLEMS = {
+        IT_WORD: [
+            ["例外処理","れいがいしょり","예외 처리"],["単体試験","たんたいしけん","단위 테스트"],
+            ["結合試験","けつごうしけん","통합 테스트"],["排他制御","はいたせいぎょ","배타 제어"],
+            ["障害調査","しょうがいちょうさ","장애 조사"],["影響範囲","えいきょうはんい","영향 범위"],
+            ["再現手順","さいげんてじゅん","재현 절차"],["暫定対応","ざんていたいおう","임시 대응"],
+            ["根本原因","こんぽんげんいん","근본 원인"],["差分確認","さぶんかくにん","차이 확인"],
+            ["移行作業","いこうさぎょう","마이그레이션 작업"],["定期実行","ていきじっこう","정기 실행"],
+            ["処理件数","しょりけんすう","처리 건수"],["異常終了","いじょうしゅうりょう","비정상 종료"],
+            ["正常終了","せいじょうしゅうりょう","정상 종료"],["取得結果","しゅとくけっか","취득 결과"],
+            ["検証環境","けんしょうかんきょう","검증 환경"],["基本設計","きほんせっけい","기본 설계"]
+        ],
+        IT_COMMENT: [
+            ["処理結果を確認する","しょりけっかをかくにんする","처리 결과를 확인한다"],
+            ["対象データを抽出する","たいしょうでーたをちゅうしゅつする","대상 데이터를 추출한다"],
+            ["更新対象を判定する","こうしんたいしょうをはんていする","갱신 대상을 판정한다"],
+            ["異常時は処理を中断する","いじょうじはしょりをちゅうだんする","이상 시 처리를 중단한다"],
+            ["該当件数をログに出力する","がいとうけんすうをろぐにしゅつりょくする","해당 건수를 로그에 출력한다"],
+            ["重複データを除外する","ちょうふくでーたをじょがいする","중복 데이터를 제외한다"],
+            ["エラー発生時は通知する","えらーはっせいじはつうちする","오류 발생 시 알린다"],
+            ["実行前にバックアップを取得する","じっこうまえにばっくあっぷをしゅとくする","실행 전에 백업을 수행한다"],
+            ["例外を捕捉して記録する","れいがいをほそくしてきろくする","예외를 포착해 기록한다"],
+            ["テストデータを初期化する","てすとでーたをしょきかする","테스트 데이터를 초기화한다"]
+        ],
+        IT_LONG: [
+            ["作業が完了しましたので、ご確認をお願いいたします。","さぎょうがかんりょうしましたので、ごかくにんをおねがいいたします。","작업이 완료되었으니 확인 부탁드립니다."],
+            ["調査の結果、データの不整合が原因と判明しました。","ちょうさのけっか、でーたのふせいごうがげんいんとはんめいしました。","조사 결과 데이터 불일치가 원인으로 확인되었습니다."],
+            ["本日のテスト結果を資料にまとめて共有いたします。","ほんじつのてすとけっかをしりょうにまとめてきょうゆういたします。","오늘 테스트 결과를 자료로 정리해 공유하겠습니다."],
+            ["再現条件を確認したうえで、修正内容を検討します。","さいげんじょうけんをかくにんしたうえで、しゅうせいないようをけんとうします。","재현 조건을 확인한 후 수정 내용을 검토하겠습니다."],
+            ["影響範囲を整理してから、対応方針をご連絡します。","えいきょうはんいをせいりしてから、たいおうほうしんをごれんらくします。","영향 범위를 정리한 후 대응 방침을 연락드리겠습니다."],
+            ["新旧環境の実行ログを比較して差分を確認します。","しんきゅうかんきょうのじっこうろぐをひかくしてさぶんをかくにんします。","신구 환경 실행 로그를 비교해 차이를 확인합니다."],
+            ["ご指摘いただいた点について、改めて確認いたします。","ごしてきいただいたてんについて、あらためてかくにんいたします。","지적해 주신 사항을 다시 확인하겠습니다."],
+            ["障害の再発防止策を検討し、結果を報告します。","しょうがいのさいはつぼうしさくをけんとうし、けっかをほうこくします。","장애 재발 방지책을 검토하고 결과를 보고합니다."]
+        ],
+        JLPT_N3_WORD: [
+            ["予定","よてい","예정"],["必要","ひつよう","필요"],["経験","けいけん","경험"],
+            ["準備","じゅんび","준비"],["変更","へんこう","변경"],["説明","せつめい","설명"],
+            ["確認","かくにん","확인"],["予約","よやく","예약"],["責任","せきにん","책임"],
+            ["迷惑","めいわく","폐, 민폐"],["状況","じょうきょう","상황"],["判断","はんだん","판단"]
+        ],
+        JLPT_N3_SENT: [
+            ["時間があれば、一緒に行きましょう。","じかんがあれば、いっしょにいきましょう。","시간이 있으면 함께 갑시다."],
+            ["忘れないようにメモしておきます。","わすれないようにめもしておきます。","잊지 않도록 메모해 두겠습니다."],
+            ["雨が降っても予定どおり出発します。","あめがふってもよていどおりしゅっぱつします。","비가 와도 예정대로 출발합니다."],
+            ["日本語が少しずつ上手になってきました。","にほんごがすこしずつじょうずになってきました。","일본어가 조금씩 능숙해졌습니다."],
+            ["仕事が終わってから買い物に行きます。","しごとがおわってからかいものにいきます。","일을 마친 후 쇼핑하러 갑니다."],
+            ["早く寝たほうがいいと思います。","はやくねたほうがいいとおもいます。","일찍 자는 편이 좋다고 생각합니다."],
+            ["質問があれば遠慮なく聞いてください。","しつもんがあればえんりょなくきいてください。","질문이 있으면 사양하지 말고 물어보세요."]
+        ],
+        JLPT_N2_WORD: [
+            ["妥当","だとう","타당"],["遂行","すいこう","수행"],["抽象","ちゅうしょう","추상"],
+            ["整合性","せいごうせい","정합성"],["顕著","けんちょ","현저"],["抑制","よくせい","억제"],
+            ["見通し","みとおし","전망"],["克服","こくふく","극복"],["把握","はあく","파악"],
+            ["根拠","こんきょ","근거"],["効率","こうりつ","효율"],["適切","てきせつ","적절"]
+        ],
+        JLPT_N2_LONG: [
+            ["限られた時間の中で成果を出すには、作業の優先順位を決める必要がある。","かぎられたじかんのなかでせいかをだすには、さぎょうのゆうせんじゅんいをきめるひつようがある。","제한된 시간 안에 성과를 내기 위해서는 작업의 우선순위를 정해야 한다."],
+            ["新しい技術を学ぶ際には、基本的な仕組みを理解することが大切だ。","あたらしいぎじゅつをまなぶさいには、きほんてきなしくみをりかいすることがたいせつだ。","새 기술을 배울 때는 기본 원리를 이해하는 것이 중요하다."],
+            ["意見が異なる場合でも、相手の立場を尊重しながら話し合うべきだ。","いけんがことなるばあいでも、あいてのたちばをそんちょうしながらはなしあうべきだ。","의견이 다를 때도 상대방의 입장을 존중하며 논의해야 한다."],
+            ["問題の原因を正確に把握しなければ、効果的な対策は立てられない。","もんだいのげんいんをせいかくにはあくしなければ、こうかてきなたいさくはたてられない。","문제의 원인을 정확히 파악하지 않으면 효과적인 대책을 세울 수 없다."],
+            ["長期的な視点で考えると、今の努力が将来の選択肢を広げるだろう。","ちょうきてきなしてんでかんがえると、いまのどりょくがしょうらいのせんたくしをひろげるだろう。","장기적인 관점에서 보면 지금의 노력이 미래의 선택지를 넓힐 것이다."]
+        ],
+        JLPT_N1_WORD: [
+            ["懸隔","けんかく","현격한 차이"],["如実","にょじつ","여실"],["緻密","ちみつ","치밀"],
+            ["危惧","きぐ","우려"],["是正","ぜせい","시정"],["逸脱","いつだつ","일탈"],
+            ["脆弱","ぜいじゃく","취약"],["網羅","もうら","망라"],["煩雑","はんざつ","번잡"],
+            ["躊躇","ちゅうちょ","주저"],["斬新","ざんしん","참신"],["端的","たんてき","단적"]
+        ],
+        JLPT_N1_LONG: [
+            ["目先の利益だけを追求すると、かえって長期的な信頼を損なうおそれがある。","めさきのりえきだけをついきゅうすると、かえってちょうきてきなしんらいをそこなうおそれがある。","눈앞의 이익만 추구하면 오히려 장기적인 신뢰를 잃을 우려가 있다."],
+            ["情報があふれる現代では、根拠を吟味して適切に判断する姿勢が欠かせない。","じょうほうがあふれるげんだいでは、こんきょをぎんみしててきせつにはんだんするしせいがかかせない。","정보가 넘치는 현대에는 근거를 검토해 적절히 판단하는 태도가 필수적이다."],
+            ["制度の見直しにあたっては、当事者の意見を十分に踏まえる必要がある。","せいどのみなおしにあたっては、とうじしゃのいけんをじゅうぶんにふまえるひつようがある。","제도를 재검토할 때에는 당사자 의견을 충분히 고려해야 한다."],
+            ["困難に直面したとしても、状況を冷静に分析すれば解決の糸口が見えてくる。","こんなんにちょくめんしたとしても、じょうきょうをれいせいにぶんせきすればかいけつのいとぐちがみえてくる。","어려움에 직면해도 상황을 침착하게 분석하면 해결의 실마리가 보인다."],
+            ["一見合理的に思える提案でも、実施に伴う負担を慎重に検討すべきだ。","いっけんごうりてきにおもえるていあんでも、じっしにともなうふたんをしんちょうにけんとうすべきだ。","언뜻 합리적인 제안이라도 시행에 따른 부담을 신중하게 검토해야 한다."]
+        ]
+    };
+
+    // ===== 상태 및 화면 요소 =====
+    // 2026-10 기준: 신규 API 키에서 Gemini 2.5 Flash는 404가 발생할 수 있음.
+    // Gemini 3.8 Flash를 우선 사용하고, 404인 경우 계정에서 사용 가능한 Flash 모델을 조회함.
+    const API_MODEL = "gemini-3.8-flash";
+    const API_ROOT = "https://generativelanguage.googleapis.com/v1beta";
+    const PREFERRED_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
+    let activeApiModel = API_MODEL;
+    const BATCH_SIZE = 10;
+    const categoryInfo = {
+        IT_WORD: "일본 IT 실무 중급 용어. Java, Spring, SQL, 배치, 코드 리뷰, 운영·테스트·장애 분석에서 쓰는 짧은 단어",
+        IT_COMMENT: "일본 시스템 개발에서 실제로 쓰는 코드 주석 또는 설계서 문구. 약 12~35자의 짧고 자연스러운 실무 문장",
+        IT_LONG: "일본 회사에서 쓰는 정중한 기술 업무 메일, 장애 보고, 일정 조율, 검증 결과 보고. 35~65자",
+        JLPT_N3_WORD: "JLPT N3 수준의 생활·직장 일본어 단어, 한자 중심",
+        JLPT_N3_SENT: "JLPT N3 문법을 사용하는 자연스러운 일본어 예문, 20~45자",
+        JLPT_N2_WORD: "JLPT N2 수준의 다양한 명사·동사·형용사 어휘",
+        JLPT_N2_LONG: "JLPT N2 수준 독해 문장, 40~75자. 원문 그대로 베끼지 말고 새 문장",
+        JLPT_N1_WORD: "JLPT N1 수준 고급 한자 어휘",
+        JLPT_N1_LONG: "JLPT N1 수준의 독해와 논리적 글쓰기 문장, 45~90자. 새 문장"
+    };
+    let currentCat = "IT_WORD";
+    let currentMode = "MODE_1";
+    let currentIndex = 0;
+    let sessionStartTime = null;
+    let sessionElapsedMs = 0;
+    let timerInterval = null;
+    let sessionFinished = false;
+    let completedChars = 0;
+    let totalAttempts = 0;
+    let totalCorrectAttempts = 0;
+    let totalErrors = 0;
+    let skippedCount = 0;
+    let previousInput = "";
+    let completedCount = 0;
+    let lastFinishAt = 0;
+    let lastImeCommitAt = 0;
+    let isComposing = false;
+    let maxCpm = 0;
+    let sessionCpms = [];
+    let sessionAccs = []; // 이전 버전의 성적 변수와 호환
+    let isGenerating = false;
+    const aiCategory = {};
+    const historyByCategory = {};
+    const lastShownByCategory = {};
+
+    const kanjiEl = document.getElementById("kanji-display");
+    const romajiEl = document.getElementById("romaji-display");
+    const meaningEl = document.getElementById("meaning-display");
+    const inputEl = document.getElementById("typing-input");
+    const cpmEl = document.getElementById("current-cpm");
+    const maxCpmEl = document.getElementById("max-cpm");
+    const accEl = document.getElementById("accuracy");
+    const progressEl = document.getElementById("progress");
+    const speedBar = document.getElementById("speed-bar");
+    const statusEl = document.getElementById("status-panel");
+    const aiButton = document.getElementById("btn-generate");
+    const overlay = document.getElementById("loading-overlay");
+    const feedbackEl = document.getElementById("typing-feedback");
+    const imeProgressEl = document.getElementById("ime-progress");
+    const romajiGuideEl = document.getElementById("romaji-guide");
+    const errorsEl = document.getElementById("error-count");
+    const timeEl = document.getElementById("time-display");
+    const goalEl = document.getElementById("goal-bar");
+    const goalWrapEl = document.getElementById("goal-wrap");
+    const keyInput = document.getElementById("api-key-input");
+
+    function setStatus(message, kind = "") {
+        statusEl.textContent = message;
+        statusEl.className = `status-panel ${kind}`.trim();
+    }
+
+    function saveApiKey() {
+        const key = keyInput.value.trim();
+        if (!key) { setStatus("저장할 API 키를 입력해 주세요.", "error"); return; }
+        try {
+            localStorage.setItem("GEMINI_API_KEY", key);
+            setStatus("API 키가 현재 브라우저에 저장되었습니다. 개인 PC에서만 사용하세요.", "success");
+        } catch (e) {
+            setStatus("브라우저 저장이 제한되어 있습니다. 현재 탭에서 API 키를 직접 사용하세요.", "error");
+        }
+    }
+
+    function clearApiKey() {
+        keyInput.value = "";
+        try { localStorage.removeItem("GEMINI_API_KEY"); } catch (e) { /* 저장 공간 제한 */ }
+        setStatus("저장된 API 키를 삭제했습니다. 현재 문제는 계속 연습할 수 있습니다.");
+    }
+
+    function getApiKey() {
+        if (keyInput.value.trim()) return keyInput.value.trim();
+        try { return localStorage.getItem("GEMINI_API_KEY") || ""; } catch (e) { return ""; }
+    }
+
+    const BASE_ROMAJI = {
+        "あ":"a","い":"i","う":"u","え":"e","お":"o",
+        "か":"ka","き":"ki","く":"ku","け":"ke","こ":"ko",
+        "さ":"sa","し":"shi","す":"su","せ":"se","そ":"so",
+        "た":"ta","ち":"chi","つ":"tsu","て":"te","と":"to",
+        "な":"na","に":"ni","ぬ":"nu","ね":"ne","の":"no",
+        "は":"ha","ひ":"hi","ふ":"fu","へ":"he","ほ":"ho",
+        "ま":"ma","み":"mi","む":"mu","め":"me","も":"mo",
+        "や":"ya","ゆ":"yu","よ":"yo",
+        "ら":"ra","り":"ri","る":"ru","れ":"re","ろ":"ro",
+        "わ":"wa","を":"wo","ん":"n",
+        "が":"ga","ぎ":"gi","ぐ":"gu","げ":"ge","ご":"go",
+        "ざ":"za","じ":"ji","ず":"zu","ぜ":"ze","ぞ":"zo",
+        "だ":"da","ぢ":"ji","づ":"zu","で":"de","ど":"do",
+        "ば":"ba","び":"bi","ぶ":"bu","べ":"be","ぼ":"bo",
+        "ぱ":"pa","ぴ":"pi","ぷ":"pu","ぺ":"pe","ぽ":"po",
+        "ゔ":"vu","ぁ":"xa","ぃ":"xi","ぅ":"xu","ぇ":"xe","ぉ":"xo",
+        "ゃ":"xya","ゅ":"xyu","ょ":"xyo","ゎ":"xwa",
+        "。":".","、":",","！":"!","？":"?","!":"!","?":"?",
+        " ":" ","　":" ","・":"-","／":"/","/":"/", "（":"(","）":")", "(":"(",")":")", ":":":", "：":":", "-":"-"
+    };
+    const COMBINED_ROMAJI = {
+        "きゃ":"kya","きゅ":"kyu","きょ":"kyo","しゃ":"sha","しゅ":"shu","しょ":"sho",
+        "ちゃ":"cha","ちゅ":"chu","ちょ":"cho","にゃ":"nya","にゅ":"nyu","にょ":"nyo",
+        "ひゃ":"hya","ひゅ":"hyu","ひょ":"hyo","みゃ":"mya","みゅ":"myu","みょ":"myo",
+        "りゃ":"rya","りゅ":"ryu","りょ":"ryo","ぎゃ":"gya","ぎゅ":"gyu","ぎょ":"gyo",
+        "じゃ":"ja","じゅ":"ju","じょ":"jo","ぢゃ":"ja","ぢゅ":"ju","ぢょ":"jo",
+        "びゃ":"bya","びゅ":"byu","びょ":"byo","ぴゃ":"pya","ぴゅ":"pyu","ぴょ":"pyo",
+        "てぃ":"ti","でぃ":"di","ふぁ":"fa","ふぃ":"fi","ふぇ":"fe","ふぉ":"fo",
+        "うぃ":"wi","うぇ":"we","うぉ":"wo","しぇ":"she","ちぇ":"che","じぇ":"je",
+        "つぁ":"tsa","つぃ":"tsi","つぇ":"tse","つぉ":"tso",
+        "どぅ":"du","とぅ":"tu","でゅ":"dyu","てゅ":"tyu",
+        "ゔぁ":"va","ゔぃ":"vi","ゔぇ":"ve","ゔぉ":"vo","ゔゅ":"vyu"
+    };
+
+    function normalizeKana(text) {
+        return String(text).normalize("NFKC").replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 96));
+    }
+
+    // API가 잘못된 로마자를 보내도 학습에 지장이 없도록 가나에서 로마자를 계산합니다.
+    function kanaToRomaji(reading) {
+        const str = normalizeKana(reading);
+        let result = "";
+        for (let i = 0; i < str.length; i++) {
+            let curr = str[i];
+            if (curr === "っ") {
+                const next = COMBINED_ROMAJI[str.slice(i+1,i+3)] || BASE_ROMAJI[str[i+1]] || "";
+                if (!next || !/^[a-z]/.test(next)) return null;
+                result += next.startsWith("ch") ? "t" : next[0];
+                continue;
+            }
+            if (curr === "ー") {
+                const match = result.match(/[aeiou](?!.*[aeiou])/);
+                const lastVowel = (result.match(/[aeiou]$/) || [])[0];
+                if (!match || !lastVowel) return null;
+                result += lastVowel;
+                continue;
+            }
+            const pair = str.slice(i, i+2);
+            if (COMBINED_ROMAJI[pair]) { result += COMBINED_ROMAJI[pair]; i++; continue; }
+            if (curr === "ん") {
+                const nextRomaji = COMBINED_ROMAJI[str.slice(i+1,i+3)] || BASE_ROMAJI[str[i+1]] || "";
+                result += /^[aeiouy]/.test(nextRomaji) ? "n'" : "n";
+                continue;
+            }
+            if (Object.prototype.hasOwnProperty.call(BASE_ROMAJI, curr)) { result += BASE_ROMAJI[curr]; continue; }
+            // 숫자/로마자와 일부 단순 문장부호는 그대로 허용.
+            if (/[a-z0-9,.!?\s]/i.test(curr)) { result += curr; continue; }
+            return null;
+        }
+        return result;
+    }
+
+    function makeProblem(pairs, meaning) {
+        if (!Array.isArray(pairs) || !pairs.length || pairs.length > 50) return null;
+        const cleanPairs = [];
+        for (const pair of pairs) {
+            if (!pair || typeof pair.k !== "string" || typeof pair.h !== "string") return null;
+            const k = pair.k.trim();
+            const h = pair.h.trim();
+            if (!k || !h || k.length > 150 || h.length > 200) return null;
+            cleanPairs.push({k,h});
+        }
+        if (typeof meaning !== "string" || !meaning.trim()) return null;
+        const romaji = kanaToRomaji(cleanPairs.map(pair => pair.h).join(""));
+        if (!romaji || romaji.length > 600) return null;
+        return { pairs: cleanPairs, romaji, meaning: meaning.trim() };
+    }
+
+    function problemKey(problem) {
+        return problem.pairs.map(pair => pair.k).join("").normalize("NFKC").replace(/\s+/g, "").toLowerCase();
+    }
+
+    function shuffle(items) {
+        const arr = items.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        if (arr.length > 1 && problemKey(arr[0]) === lastShownByCategory[currentCat]) {
+            const swapIndex = arr.findIndex(p => problemKey(p) !== lastShownByCategory[currentCat]);
+            if (swapIndex > 0) [arr[0], arr[swapIndex]] = [arr[swapIndex], arr[0]];
+        }
+        return arr;
+    }
+
+    // 기본 문제로 학습하는 동안 카테고리 내 중복을 줄입니다.
+    for (const [category, extra] of Object.entries(EXTRA_PROBLEMS)) {
+        for (const [kanji, kana, meaning] of extra) {
+            const p = makeProblem([{k: kanji, h: kana}], `[기본 추가] ${meaning}`);
+            if (p) PROBLEM_DB[category].push(p);
+        }
+    }
+    for (const category of Object.keys(PROBLEM_DB)) {
+        PROBLEM_DB[category] = PROBLEM_DB[category]
+            .map(p => makeProblem(p.pairs, p.meaning))
+            .filter(Boolean)
+            .filter((p, i, arr) => arr.findIndex(other => problemKey(other) === problemKey(p)) === i);
+        historyByCategory[category] = [];
+        aiCategory[category] = false;
+    }
+    let problemList = shuffle(PROBLEM_DB[currentCat]);
+
+    window.addEventListener("DOMContentLoaded", () => {
+        try {
+            const saved = localStorage.getItem("GEMINI_API_KEY");
+            if (saved) keyInput.value = saved;
+        } catch (e) { /* 시크릿 모드 등 저장 차단 시 무시 */ }
+        initGame(false);
+    });
+
+    function changeCategory() {
+        currentCat = document.getElementById("category-select").value;
+        document.getElementById("result-modal").style.display = "none";
+        problemList = shuffle(PROBLEM_DB[currentCat] || []);
+        initGame(false);
+        setStatus(`${document.getElementById("category-select").selectedOptions[0].text} · ${problemList.length}개 문제 (${aiCategory[currentCat] ? "AI 문제" : "기본 문제"}).`);
+    }
+
+    function durationLimitMs() {
+        return Number(document.getElementById("duration-select").value) * 1000;
+    }
+
+    function changePracticeSettings() {
+        restartSession();
+        setStatus("연습 시간을 변경하여 기록을 새로 시작했습니다.");
+    }
+
+    function restartSession() {
+        document.getElementById("result-modal").style.display = "none";
+        initGame(true);
+        setStatus("연습 기록을 초기화했습니다. 첫 입력부터 시간을 측정합니다.");
+    }
+
+    function initGame(doShuffle = true) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        sessionStartTime = null;
+        sessionElapsedMs = 0;
+        sessionFinished = false;
+        completedChars = 0;
+        completedCount = 0;
+        totalAttempts = 0;
+        totalCorrectAttempts = 0;
+        totalErrors = 0;
+        skippedCount = 0;
+        previousInput = "";
+        currentIndex = 0;
+        sessionCpms = [];
+        sessionAccs = [];
+        if (doShuffle) problemList = shuffle(problemList);
+        if (!problemList.length) {
+            setStatus("표시할 문제가 없습니다. 다른 카테고리를 선택하거나 AI로 문제를 생성해 주세요.", "error");
+            return;
+        }
+        document.getElementById("time-label").textContent = durationLimitMs() ? "남은 시간" : "경과 시간";
+        document.getElementById("result-modal").style.display = "none";
+        loadProblem();
+        updateStats();
+    }
+
+    function reshuffleCurrentProblems() {
+        if (isGenerating) return;
+        initGame(true);
+        setStatus(`현재 ${problemList.length}개 문제의 순서를 섞었습니다. 새로운 내용을 추가하려면 AI 생성을 누르세요.`);
+    }
+
+    function setMode(mode) {
+        if (isGenerating) return;
+        currentMode = mode;
+        document.getElementById("btn-mode1").classList.toggle("active", mode === "MODE_1");
+        document.getElementById("btn-mode2").classList.toggle("active", mode === "MODE_2");
+        document.getElementById("strict-mode").disabled = mode === "MODE_2";
+        document.getElementById("mode-desc").innerText = mode === "MODE_1"
+            ? "💡 [로마자 직타] 로마자를 정확히 입력하세요. 틀린 글자는 빨간색으로 표시됩니다."
+            : "💡 [IME 한자변환] 일본어 입력기로 한자를 확정한 뒤 Enter를 눌러 제출하세요.";
+        restartSession();
+    }
+
+    function loadProblem() {
+        if (!problemList.length || sessionFinished) return;
+        if (!problemList[currentIndex]) currentIndex = 0;
+        const p = problemList[currentIndex];
+        lastShownByCategory[currentCat] = problemKey(p);
+        meaningEl.innerText = p.meaning;
+        document.getElementById("stage-badge").innerText = `${document.getElementById("category-select").selectedOptions[0].text} · ${aiCategory[currentCat] ? "AI 생성" : "기본 문제"}`;
+        progressEl.innerText = `${currentIndex + 1} / ${problemList.length}`;
+        resetCurrentInput();
+        renderTargetText("");
+    }
+
+    function resetCurrentInput() {
+        previousInput = "";
+        inputEl.value = "";
+        feedbackEl.textContent = "정확하게 입력해 보세요.";
+        feedbackEl.className = "feedback";
+        inputEl.classList.remove("wrong-flash");
+        inputEl.disabled = false;
+        updateStats();
+        inputEl.focus();
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+    }
+
+    // 한자에만 후리가나. 조사/히라가나/가타카나/영어/기호는 그대로 표시.
+    // 한 덩어리로 전달된 문장도 원문 속 가나를 기준으로 읽기를 정렬한다.
+    function rubyForPair(surface, reading) {
+        const han = /[\p{Script=Han}々〆ヶ]/u;
+        if (!han.test(surface)) return escapeHtml(surface);
+        const tokens = surface.match(/[\p{Script=Han}々〆ヶ]+|[^\p{Script=Han}々〆ヶ]+/gu) || [surface];
+        let pos = 0;
+        const normalizedReading = normalizeKana(reading);
+        let markup = "";
+        for (let i = 0; i < tokens.length; i++) {
+            const part = tokens[i];
+            if (!han.test(part)) {
+                const normalizedPart = normalizeKana(part);
+                // 가나 조사/어미 및 기호는 위에 후리가나를 추가하지 않는다.
+                if (normalizedReading.startsWith(normalizedPart, pos)) pos += normalizedPart.length;
+                else {
+                    const matchAt = normalizedReading.indexOf(normalizedPart, pos);
+                    if (matchAt !== -1) pos = matchAt + normalizedPart.length;
+                }
+                markup += escapeHtml(part);
+                continue;
+            }
+            // 다음 가나 조각을 앵커로 사용해 현재 한자 그룹의 후리가나를 계산한다.
+            let end = normalizedReading.length;
+            for (let j = i + 1; j < tokens.length; j++) {
+                if (!han.test(tokens[j])) {
+                    const anchor = normalizeKana(tokens[j]);
+                    const found = normalizedReading.indexOf(anchor, pos);
+                    if (found >= pos) { end = found; break; }
+                }
+            }
+            const furigana = normalizedReading.slice(pos, end);
+            markup += furigana ? `<ruby>${escapeHtml(part)}<rt>${escapeHtml(furigana)}</rt></ruby>` : escapeHtml(part);
+            pos = end;
+        }
+        return markup;
+    }
+
+    function fullKanjiTarget() {
+        return problemList[currentIndex].pairs.map(pt => pt.k).join("");
+    }
+    function fullKanaTarget() {
+        return problemList[currentIndex].pairs.map(pt => pt.h).join("");
+    }
+    function currentTarget(typed = "") {
+        const p = problemList[currentIndex];
+        if (currentMode === "MODE_1") return p.romaji;
+        const kanji = fullKanjiTarget();
+        const kana = fullKanaTarget();
+        if (!typed) return kanji;
+        const prefixCount = str => [...typed].filter((x, i) => x === [...str][i]).length;
+        return prefixCount(kana) > prefixCount(kanji) ? kana : kanji;
+    }
+
+    function coloredChars(target, typed = "") {
+        const typedChars = [...typed];
+        return [...target].map((c,i) => {
+            const cls = i < typedChars.length
+                ? (typedChars[i].toLowerCase() === c.toLowerCase() ? "char-correct" : "char-wrong")
+                : (i === typedChars.length ? "char-current" : "char-pending");
+            return `<span class="${cls}">${escapeHtml(c)}</span>`;
+        }).join("");
+    }
+
+    function renderTargetText(typed = "") {
+        if (!problemList[currentIndex]) return;
+        const p = problemList[currentIndex];
+        kanjiEl.innerHTML = p.pairs.map(pair => rubyForPair(pair.k, pair.h)).join("");
+        romajiGuideEl.classList.toggle("is-hidden", !document.getElementById("show-romaji").checked);
+        if (currentMode === "MODE_1") {
+            romajiEl.innerHTML = coloredChars(p.romaji, typed);
+            imeProgressEl.hidden = true;
+        } else {
+            // IME에서도 한자/후리가나 바로 밑에 로마자를 고정 표시한다.
+            romajiEl.textContent = p.romaji;
+            imeProgressEl.hidden = false;
+            const target = currentTarget(typed);
+            imeProgressEl.innerHTML = '<span class="romaji-title">입력 대조 (한자/가나)</span> ' + coloredChars(target, typed);
+        }
+    }
+
+    function getElapsedMs() {
+        if (sessionStartTime === null) return sessionElapsedMs;
+        return sessionElapsedMs + (Date.now() - sessionStartTime);
+    }
+
+    function startSessionIfNeeded() {
+        if (sessionFinished || sessionStartTime !== null) return;
+        sessionStartTime = Date.now();
+        timerInterval = setInterval(updateStats, 200);
+    }
+
+    function formatTime(totalSeconds) {
+        const s = Math.max(0, Math.floor(totalSeconds));
+        return `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
+    }
+
+    function currentCorrectPrefixCount() {
+        if (!problemList[currentIndex] || sessionFinished) return 0;
+        const typed = [...inputEl.value];
+        const target = [...currentTarget(inputEl.value)];
+        let n = 0;
+        while (n < typed.length && n < target.length && typed[n].toLowerCase() === target[n].toLowerCase()) n++;
+        return n;
+    }
+
+    function bestStorageKey() { return `typing_best_v2_${currentCat}_${currentMode}`; }
+    function getBest() {
+        try { return Number(localStorage.getItem(bestStorageKey())) || 0; } catch (e) { return 0; }
+    }
+    function saveBest(cpm) {
+        if (cpm <= getBest()) return;
+        try { localStorage.setItem(bestStorageKey(), String(cpm)); } catch(e) { /* 로컬 저장 차단 */ }
+    }
+
+    function updateStats() {
+        const elapsed = getElapsedMs();
+        const limit = durationLimitMs();
+        const successfulChars = completedChars + currentCorrectPrefixCount();
+        // 추정 키 횟수가 아니라 실제 확정된 문자 수 기준. IME도 단위가 동일한 자/분이다.
+        const cpm = elapsed >= 1000 ? Math.round(successfulChars * 60000 / elapsed) : 0;
+        const acc = totalAttempts ? Math.round(totalCorrectAttempts * 100 / totalAttempts) : 100;
+        cpmEl.textContent = String(cpm);
+        accEl.textContent = acc + "%";
+        errorsEl.textContent = String(totalErrors);
+        speedBar.style.width = Math.min(100, (cpm / 500) * 100) + "%";
+        const targetGoal = Number(document.getElementById("goal-select").value) || 200;
+        const goalPct = Math.min(100, Math.round(cpm * 100 / targetGoal));
+        goalEl.style.width = goalPct + "%";
+        goalWrapEl.setAttribute("aria-valuenow", String(goalPct));
+        timeEl.textContent = formatTime(limit ? Math.ceil(Math.max(0,limit - elapsed) / 1000) : Math.floor(elapsed / 1000));
+        maxCpm = getBest();
+        maxCpmEl.textContent = String(maxCpm);
+        if (limit && elapsed >= limit && !sessionFinished) showStageResult(true);
+        return {cpm, acc};
+    }
+
+    function showFeedback(message, type = "") {
+        feedbackEl.textContent = message;
+        feedbackEl.className = `feedback ${type}`.trim();
+        inputEl.classList.toggle("wrong-flash", type === "error");
+    }
+
+    function countAttempt(ch, index, target) {
+        totalAttempts++;
+        const correct = Boolean(target[index]) && ch.toLowerCase() === target[index].toLowerCase();
+        if (correct) totalCorrectAttempts++;
+        else totalErrors++;
+        return correct;
+    }
+
+    inputEl.addEventListener("beforeinput", e => {
+        if (e.inputType === "insertFromPaste" || e.inputType === "insertFromDrop") {
+            e.preventDefault();
+            showFeedback("붙여넣기는 타자 연습에 포함되지 않아요. 직접 입력해 주세요.","error");
+        }
+    });
+    inputEl.addEventListener("paste", e => { e.preventDefault(); showFeedback("붙여넣기 대신 직접 타이핑해 주세요.","error"); });
+    inputEl.addEventListener("compositionstart", () => { isComposing = true; });
+    inputEl.addEventListener("compositionend", () => {
+        isComposing = false;
+        lastImeCommitAt = Date.now();
+        handleInput();
+    });
+    inputEl.addEventListener("keydown", e => {
+        if (sessionFinished) { e.preventDefault(); return; }
+        if (e.key === "Escape") {
+            e.preventDefault(); inputEl.value = ""; previousInput = "";
+            renderTargetText(""); showFeedback("현재 입력만 지웠습니다. 오타 기록과 타이머는 유지됩니다.");
+            updateStats(); return;
+        }
+        if (e.key === "Enter" && !isComposing && !e.isComposing && e.keyCode !== 229) {
+            e.preventDefault();
+            if (Date.now() - lastImeCommitAt > 110) checkCompletion(true);
+            return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (currentMode === "MODE_1" && e.key.length === 1 && document.getElementById("strict-mode").checked) {
+            const target = problemList[currentIndex]?.romaji || "";
+            const index = inputEl.selectionStart ?? inputEl.value.length;
+            const expected = target[index] || "";
+            if (e.key.toLowerCase() !== expected.toLowerCase()) {
+                e.preventDefault();
+                startSessionIfNeeded();
+                totalAttempts++;
+                totalErrors++;
+                showFeedback(`오타! ${index + 1}번째 글자는 '${expected || "끝"}' 입니다.`,"error");
+                updateStats();
+                return;
+            }
+        }
+        if (e.key.length === 1) playSound("click");
+    });
+    inputEl.addEventListener("input", handleInput);
+
+    function handleInput() {
+        if (isComposing || sessionFinished || !problemList[currentIndex]) return;
+        const typed = inputEl.value;
+        if (typed === previousInput) return;
+        const old = [...previousInput];
+        const curr = [...typed];
+        let prefix = 0;
+        while (prefix < old.length && prefix < curr.length && old[prefix] === curr[prefix]) prefix++;
+        const inserted = curr.slice(prefix);
+        if (inserted.length) {
+            startSessionIfNeeded();
+            const target = [...currentTarget(typed)];
+            let bad = 0;
+            for (let i = 0; i < inserted.length; i++) {
+                if (!countAttempt(inserted[i], prefix + i, target)) bad++;
+            }
+            if (bad) showFeedback(`오타 ${bad}개 감지 — 수정 후 계속 입력하세요.`,"error");
+            else showFeedback("좋아요! 계속 입력하세요.","success");
+        }
+        previousInput = typed;
+        renderTargetText(typed);
+        updateStats();
+        if (currentMode === "MODE_1") checkCompletion(false);
+    }
+
+    function checkCompletion(isEnterPressed) {
+        if (isComposing || sessionFinished || !problemList[currentIndex]) return;
+        const p = problemList[currentIndex];
+        const typed = inputEl.value;
+        const fullKanji = fullKanjiTarget();
+        const fullKana = fullKanaTarget();
+        const strictKanji = document.getElementById("require-kanji").checked;
+        const completed = currentMode === "MODE_1"
+            ? typed.toLowerCase() === p.romaji.toLowerCase()
+            : isEnterPressed && (typed === fullKanji || (!strictKanji && typed === fullKana));
+        if (completed) {
+            playSound("success");
+            finishSentence();
+        } else if (isEnterPressed) {
+            const hint = currentMode === "MODE_2" && strictKanji
+                ? "한자변환 필수가 켜져 있습니다. 화면의 한자 표기와 정확히 일치하도록 변환하세요."
+                : "화면에 표시된 문제와 정확히 일치하도록 입력하세요.";
+            showFeedback(hint,"error");
+        }
+    }
+
+    function finishSentence() {
+        if (sessionFinished) return;
+        const p = problemList[currentIndex];
+        completedChars += currentMode === "MODE_1" ? [...p.romaji].length : [...fullKanjiTarget()].length;
+        completedCount++;
+        currentIndex++;
+        if (currentIndex < problemList.length) {
+            loadProblem();
+            setStatus(`✅ ${completedCount}문제 완료! 누적 오타 ${totalErrors}개. 계속 연습하세요.`,"success");
+        } else {
+            showStageResult(false);
+        }
+    }
+
+    function skipProblem() {
+        if (sessionFinished || isGenerating) return;
+        skippedCount++;
+        currentIndex++;
+        if (currentIndex < problemList.length) loadProblem();
+        else showStageResult(false);
+        setStatus(`건너뛴 문제: ${skippedCount}개. 건너뛴 문제는 완료 개수에 포함되지 않습니다.`);
+    }
+
+    function showStageResult(timeUp = false) {
+        if (sessionFinished) return;
+        sessionFinished = true;
+        sessionElapsedMs = getElapsedMs();
+        sessionStartTime = null;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        inputEl.disabled = true;
+        const speed = sessionElapsedMs >= 1000 ? Math.round(completedChars * 60000 / sessionElapsedMs) : 0;
+        const accuracy = totalAttempts ? Math.round(totalCorrectAttempts * 100 / totalAttempts) : 100;
+        const modal = document.getElementById("result-modal");
+        modal.querySelector("h2").textContent = timeUp ? "⏰ 시간 종료!" : "🎉 연습 결과";
+        document.getElementById("final-cpm").textContent = speed + " 자/분";
+        document.getElementById("final-acc").textContent = accuracy + "%";
+        document.getElementById("result-detail").textContent = `완료 ${completedCount}문제 · 건너뛰기 ${skippedCount}문제 · 오타 ${totalErrors}개 · 연습 시간 ${formatTime(sessionElapsedMs / 1000)}`;
+        if (completedCount > 0) saveBest(speed);
+        updateStats();
+        modal.style.display = "flex";
+        setStatus(`연습 종료! 완료 ${completedCount}개, 정확도 ${accuracy}%, 속도 ${speed}자/분.`, "success");
+    }
+
+    async function closeModalAndReload() {
+        document.getElementById("result-modal").style.display = "none";
+        if (aiCategory[currentCat] && getApiKey()) {
+            await generateAIProblems(true);
+        } else {
+            initGame(true);
+            setStatus("기본 문제의 순서를 다시 섞었습니다. 새로운 내용은 AI 문제 생성 기능을 사용하세요.");
+        }
+    }
+
+    function explainApiError(status, errorInfo, model = activeApiModel) {
+        const msg = errorInfo?.message || "서버가 자세한 오류 메시지를 보내지 않았습니다.";
+        if (status === 400 && /api.key|api_key|key/i.test(msg)) return `API 키가 유효하지 않습니다 (400). ${msg}`;
+        if (status === 401 || status === 403) return `API 접근 권한 오류 (${status}). Google AI Studio의 키와 사용 권한을 확인하세요. ${msg}`;
+        if (status === 404) return `모델 접근 오류 (404: ${model}). API 키에서 사용할 수 있는 모델인지 확인하세요. ${msg}`;
+        if (status === 429) return `API 사용 한도 초과 (429). 계정 할당량 및 결제 설정을 확인하세요. ${msg}`;
+        if (status >= 500) return `Gemini 서버 오류 (${status}). 잠시 후 다시 시도해 보세요. ${msg}`;
+        return `Gemini API 오류 (${status} / ${model}): ${msg}`;
+    }
+
+    // 모델 404가 발생했을 때만 모델 목록을 조회합니다 (정상 시 추가 호출 없음).
+    async function listAvailableFlashModels(apiKey, signal) {
+        const response = await fetch(`${API_ROOT}/models?pageSize=200`, {
+            method: "GET", headers: {"x-goog-api-key": apiKey}, signal
+        });
+        let data;
+        try { data = await response.json(); }
+        catch(e) { throw new Error(`모델 목록 응답을 읽을 수 없습니다 (HTTP ${response.status}).`); }
+        if (!response.ok) throw new Error(explainApiError(response.status, data?.error));
+        const names = (data.models || [])
+            .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+            .map(m => String(m.name || "").replace(/^models\//, ""))
+            .filter(name => /^gemini-[\w.-]*flash[\w.-]*$/.test(name) && !/(image|live|tts|audio|transcri)/i.test(name));
+        const unique = [...new Set(names)];
+        return [
+            ...PREFERRED_MODELS.filter(model => unique.includes(model)),
+            ...unique.filter(model => !PREFERRED_MODELS.includes(model) && !/(preview|exp)/.test(model)).sort().reverse()
+        ];
+    }
+
+    async function requestGeminiProblems(apiKey, body, signal) {
+        let model = activeApiModel;
+        let candidates = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const response = await fetch(`${API_ROOT}/models/${encodeURIComponent(model)}:generateContent`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json", "x-goog-api-key": apiKey},
+                body: JSON.stringify(body), signal
+            });
+            let data;
+            try { data = await response.json(); }
+            catch(e) { throw new Error(`API 응답을 JSON으로 읽을 수 없습니다 (HTTP ${response.status}).`); }
+            if (response.ok) {
+                activeApiModel = model;
+                return {data, model};
+            }
+            if (response.status !== 404) throw new Error(explainApiError(response.status, data?.error, model));
+            // 404가 발생하면 이 키에서 지원되는 모델 중 다른 Flash 모델로 재시도합니다.
+            if (candidates === null) {
+                setStatus(`${model}을(를) 사용할 수 없어 사용 가능한 Gemini 모델을 확인하고 있습니다...`, "working");
+                try { candidates = await listAvailableFlashModels(apiKey, signal); }
+                catch(e) { throw new Error(`${explainApiError(404, data?.error, model)}\n모델 자동 조회도 실패했습니다: ${e.message}`); }
+                candidates = candidates.filter(name => name !== model);
+            }
+            if (!candidates.length) throw new Error(`${explainApiError(404, data?.error, model)}\n이 API 키에서 사용 가능한 대체 Flash 모델을 찾지 못했습니다.`);
+            model = candidates.shift();
+            setStatus(`${model} 모델로 자동 재시도하고 있습니다...`, "working");
+        }
+        throw new Error("사용 가능한 모델에 여러 번 연결을 시도했지만 실패했습니다. API 키 권한을 확인하세요.");
+    }
+
+    async function generateAIProblems(automatic = false) {
+        if (isGenerating) return;
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            setStatus("Gemini API 키가 없습니다. 상단 입력창에 키를 넣고 AI 문제 생성 버튼을 누르세요.", "error");
+            return;
+        }
+        const categoryAtRequest = currentCat;
+        isGenerating = true;
+        aiButton.disabled = true;
+        overlay.style.display = "flex";
+        setStatus(`${automatic ? "다음 단계" : "새"} AI 문제 ${BATCH_SIZE}개를 생성하고 있습니다...`, "working");
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90000);
+        const past = (historyByCategory[categoryAtRequest] || []).slice(-45);
+        const currentSamples = PROBLEM_DB[categoryAtRequest].slice(0, 20).map(p => p.pairs.map(x=>x.k).join(""));
+        const excluded = [...new Set([...past, ...currentSamples])].slice(-55);
+        const promptText = `한국인을 위한 일본어 타자 연습 문제를 정확히 ${BATCH_SIZE}개 만들어라.
+카테고리: ${categoryAtRequest}, 요구사항: ${categoryInfo[categoryAtRequest]}.
+모든 문제는 서로 다른 일본어 표현이어야 한다. 기존 문제와 문장 재사용 금지.
+제외할 문제: ${JSON.stringify(excluded)}
+순수 JSON 배열로만 반환한다. 각 항목은 {"pairs":[{"k":"일본어 화면 표기", "h":"그 표기의 정확한 가나 발음"}], "meaning":"자연스러운 한국어 뜻"} 형식이다.
+한자에만 후리가나를 정확히 달아야 한다. 문장을 한자어·조사·가나 어미·기호 단위의 pairs로 세분화하여 각각의 k와 h가 정확히 대응하도록 작성하라. 조사와 가나, 가타카나에는 별도 후리가나가 표시되지 않는다.
+k의 일본어 문자와 h의 가나 읽기는 정확히 대응해야 한다. 일본어 조사는 k와 h가 동일해도 된다.
+h에는 히라가나/가타카나/일본어 문장부호만 사용하고, 문장부호는 k와 동일하게 적어라. 어색한 문장, 잘못된 읽기, 지나치게 긴 문장 금지.
+romaji 필드는 만들지 마라. 앱에서 가나 발음을 자동 변환한다.`;
+        try {
+            const {data, model: usedModel} = await requestGeminiProblems(apiKey, {
+                contents: [{role:"user",parts:[{text:promptText}]}],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type:"ARRAY", minItems:BATCH_SIZE, maxItems:BATCH_SIZE,
+                        items: {
+                            type:"OBJECT",
+                            properties: {
+                                pairs: {type:"ARRAY",items:{type:"OBJECT",properties:{k:{type:"STRING"},h:{type:"STRING"}},required:["k","h"]}},
+                                meaning: {type:"STRING"}
+                            }, required:["pairs","meaning"]
+                        }
+                    },
+                    maxOutputTokens: 8192
+                }
+            }, controller.signal);
+            const rawText = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
+            if (!rawText) {
+                const reason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason || "응답 내용 없음";
+                throw new Error(`Gemini가 문제 데이터를 반환하지 않았습니다 (${reason}).`);
+            }
+            let parsed;
+            try { parsed = JSON.parse(rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")); }
+            catch(e) { throw new Error("Gemini 응답이 올바른 JSON 형식이 아닙니다. 다시 생성해 보세요."); }
+            if (!Array.isArray(parsed)) throw new Error("Gemini가 JSON 배열 대신 다른 형식을 반환했습니다.");
+            const previousKeys = new Set([...past, ...PROBLEM_DB[categoryAtRequest].map(problemKey)]);
+            const newKeys = new Set();
+            const fresh = parsed.map(item => makeProblem(item?.pairs, item?.meaning))
+                .filter(Boolean).filter(p => {
+                    const key = problemKey(p);
+                    if (previousKeys.has(key) || newKeys.has(key)) return false;
+                    newKeys.add(key); return true;
+                });
+            if (!fresh.length) throw new Error(`AI가 ${parsed.length}개를 반환했지만, 모두 중복이거나 읽기/형식이 올바르지 않았습니다. 다시 생성해 주세요.`);
+            PROBLEM_DB[categoryAtRequest] = fresh;
+            aiCategory[categoryAtRequest] = true;
+            historyByCategory[categoryAtRequest] = [...past, ...fresh.map(p => p.pairs.map(x=>x.k).join(""))].slice(-150);
+            if (currentCat === categoryAtRequest) {
+                problemList = shuffle(fresh);
+                initGame(false);
+                setStatus(`✅ AI가 ${fresh.length}개의 새 문제를 생성했습니다! 사용 모델: ${usedModel} · 카테고리: ${categoryAtRequest}`, "success");
+            } else {
+                setStatus(`AI가 ${categoryAtRequest} 카테고리에 ${fresh.length}개를 생성했습니다 (${usedModel}). 해당 카테고리로 돌아가 확인하세요.`, "success");
+            }
+        } catch (e) {
+            console.error("Gemini problem generation failed:",e);
+            const msg = e.name === "AbortError"
+                ? "API 응답이 90초 안에 도착하지 않아 중단했습니다. 네트워크를 확인하세요."
+                : e instanceof TypeError && /fetch/i.test(e.message)
+                    ? "Gemini 연결에 실패했습니다. 네트워크 또는 브라우저의 CORS 제한을 확인하고, 로컬 웹서버에서 실행해 보세요."
+                    : e.message;
+            setStatus(`❌ ${msg}\n기존 연습 문제는 유지됩니다.`, "error");
+            if (automatic) initGame(true); // AI 오류에도 이전 문제로 연습할 수 있게 합니다.
+        } finally {
+            clearTimeout(timeout);
+            overlay.style.display = "none";
+            isGenerating = false;
+            aiButton.disabled = false;
+        }
+    }
+
+</script>
+</body>
+</html>
