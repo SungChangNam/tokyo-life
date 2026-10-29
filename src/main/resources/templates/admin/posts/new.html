@@ -47,6 +47,32 @@
                     th:text="${category.name}">
             </option>
         </select>
+        <fieldset>
+            <legend>태그</legend>
+
+            <p>최대 20개까지 선택할 수 있습니다.</p>
+
+            <p th:if="${#lists.isEmpty(tags)}">
+                등록된 태그가 없습니다.
+                관리자 태그 관리에서 먼저 추가해주세요.
+            </p>
+
+            <div th:each="tag : ${tags}">
+                <input type="checkbox"
+                       th:field="*{tagIds}"
+                       th:value="${tag.id}">
+
+                <label th:for="${#ids.prev('tagIds')}"
+                       th:text="${tag.name}">
+                    태그 이름
+                </label>
+            </div>
+
+            <p th:if="${#fields.hasErrors('tagIds')}"
+               th:errors="*{tagIds}"
+               role="alert">
+            </p>
+        </fieldset>
     </div>
 
     <div>

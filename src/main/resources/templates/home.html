@@ -76,6 +76,10 @@
     <strong th:text="${keyword}">검색어</strong>
 </p>
 
+<p>
+    총 <span th:text="${postPage.totalCount}">0</span>개의 게시글
+</p>
+
 <p th:if="${#lists.isEmpty(posts)}">
     조건에 맞는 공개 게시글이 없습니다.
 </p>
@@ -107,6 +111,36 @@
 
     <hr>
 </article>
+
+<nav th:if="${postPage.totalCount > 0}"
+     aria-label="페이지 이동">
+
+    <a th:if="${postPage.hasPrevious()}"
+       th:href="@{/(
+                categoryId=${selectedCategoryId},
+                keyword=${keyword},
+                page=${postPage.currentPage - 1}
+            )}">
+        이전
+    </a>
+
+    <span>
+        <span th:text="${postPage.currentPage}">1</span>
+        /
+        <span th:text="${postPage.totalPages}">1</span>
+        페이지
+    </span>
+
+    <a th:if="${postPage.hasNext()}"
+       th:href="@{/(
+                categoryId=${selectedCategoryId},
+                keyword=${keyword},
+                page=${postPage.currentPage + 1}
+            )}">
+        다음
+    </a>
+
+</nav>
 
 </body>
 </html>

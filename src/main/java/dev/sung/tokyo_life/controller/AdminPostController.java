@@ -25,7 +25,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import dev.sung.tokyo_life.form.ImageDetailsForm;
+import dev.sung.tokyo_life.service.TagService;
+import dev.sung.tokyo_life.model.Tag;
 
+import java.util.List;
 import java.security.Principal;
 
 @Controller
@@ -38,17 +41,20 @@ public class AdminPostController {
     private final PostService postService;
     private final PostImageService postImageService;
     private final ImageStorageService imageStorageService;
+    private final TagService tagService;
 
     public AdminPostController(
             CategoryService categoryService,
             PostService postService,
             PostImageService postImageService,
-            ImageStorageService imageStorageService
+            ImageStorageService imageStorageService,
+            TagService tagService
     ) {
         this.categoryService = categoryService;
         this.postService = postService;
         this.postImageService = postImageService;
         this.imageStorageService = imageStorageService;
+        this.tagService = tagService;
     }
 
     @GetMapping("/new")
@@ -270,5 +276,10 @@ public class AdminPostController {
         }
 
         return "redirect:/admin/posts/" + id + "/edit";
+    }
+
+    @ModelAttribute("tags")
+    public List<Tag> tags() {
+        return tagService.findAll();
     }
 }

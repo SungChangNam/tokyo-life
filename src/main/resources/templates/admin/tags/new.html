@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>태그 추가 | Tokyo Life</title>
+</head>
+<body>
+<h1>태그 추가</h1>
+
+<form th:action="@{/admin/tags}"
+      th:object="${tagForm}"
+      method="post">
+
+    <div th:if="${#fields.hasAnyErrors()}" role="alert">
+        <p>입력 내용을 확인해주세요.</p>
+        <ul>
+            <li th:each="error : ${#fields.allErrors()}"
+                th:text="${error}">
+            </li>
+        </ul>
+    </div>
+
+    <div>
+        <label for="name">태그 이름</label>
+        <input type="text"
+               id="name"
+               th:field="*{name}"
+               maxlength="50"
+               required>
+    </div>
+
+    <button type="submit">등록</button>
+</form>
+
+<p>
+    <a th:href="@{/admin/tags}">태그 목록으로</a>
+</p>
+</body>
+</html>

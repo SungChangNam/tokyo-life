@@ -13,6 +13,7 @@ import dev.sung.tokyo_life.model.AdminPostDetail;
 import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.annotations.Delete;
 import dev.sung.tokyo_life.model.PostListItem;
+import org.apache.ibatis.annotations.Options;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -36,7 +37,7 @@ public interface PostMapper {
             """)
     Post findById(Long id);
 
-    @Insert("""
+    @Select(value = """
         INSERT INTO posts (
             author_id,
             category_id,
@@ -58,8 +59,10 @@ public interface PostMapper {
                 ELSE NULL
             END
         )
-        """)
-    int insert(
+        RETURNING id
+        """, affectData = true)
+    @Options(flushCache = Options.FlushCachePolicy.TRUE)
+    Long insert(
             @Param("authorId") Long authorId,
             @Param("categoryId") Long categoryId,
             @Param("title") String title,
@@ -232,6 +235,86 @@ public interface PostMapper {
             @Arg(column = "cover_alt_text", javaType = String.class)
     })
     List<PostListItem> searchPublishedList(
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword
+    );
+
+    @Select("""
+        <script>
+        SELECT p.id,
+               p.title,
+               p.summary,
+               i.id AS cover_image_id,
+               i.alt_text AS cover_alt_text
+        FROM posts p
+        LEFT JOIN post_images i
+            ON i.post_id = p.id
+           AND i.is_cover = true
+        WHERE p.status = 'PUBLISHED'
+
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                strpos(lower(p.title), lower(#{keyword})) > 0
+                OR strpos(
+                    lower(COALESCE(p.summary, '')),
+                    lower(#{keyword})
+                ) > 0
+                OR strpos(
+                    lower(COALESCE(p.content, '')),
+                    lower(#{keyword})
+                ) > 0
+            )
+        </if>
+
+        ORDER BY p.published_at DESC, p.id DESC
+        LIMIT #{limit}
+        OFFSET #{offset}
+        </script>
+        """)
+    @ConstructorArgs({
+            @Arg(column = "id", javaType = Long.class, id = true),
+            @Arg(column = "title", javaType = String.class),
+            @Arg(column = "summary", javaType = String.class),
+            @Arg(column = "cover_image_id", javaType = Long.class),
+            @Arg(column = "cover_alt_text", javaType = String.class)
+    })
+    List<PostListItem> findPublishedPage(
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword,
+            @Param("limit") int limit,
+            @Param("offset") long offset
+    );
+
+    @Select("""
+        <script>
+        SELECT COUNT(*)
+        FROM posts p
+        WHERE p.status = 'PUBLISHED'
+
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                strpos(lower(p.title), lower(#{keyword})) > 0
+                OR strpos(
+                    lower(COALESCE(p.summary, '')),
+                    lower(#{keyword})
+                ) > 0
+                OR strpos(
+                    lower(COALESCE(p.content, '')),
+                    lower(#{keyword})
+                ) > 0
+            )
+        </if>
+        </script>
+        """)
+    long countPublished(
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword
     );
