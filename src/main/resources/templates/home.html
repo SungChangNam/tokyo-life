@@ -7,21 +7,29 @@
 </head>
 <body>
 
-<h1>Tokyo Life Blog</h1>
+<h1>
+    <a th:href="@{/}">Tokyo Life Blog</a>
+</h1>
 
 <nav aria-label="카테고리">
     <ul>
         <li>
-            <a th:href="@{/}"
+            <a th:href="@{/(keyword=${keyword})}"
                th:attr="aria-current=${selectedCategoryId == null
                    ? 'page' : null}">
                 전체
             </a>
-            <span th:if="${selectedCategoryId == null}">선택됨</span>
+
+            <span th:if="${selectedCategoryId == null}">
+                선택됨
+            </span>
         </li>
 
         <li th:each="category : ${categories}">
-            <a th:href="@{/(categoryId=${category.id})}"
+            <a th:href="@{/(
+                    categoryId=${category.id},
+                    keyword=${keyword}
+                )}"
                th:text="${category.name}"
                th:attr="aria-current=${selectedCategoryId == category.id
                    ? 'page' : null}">
@@ -35,10 +43,41 @@
     </ul>
 </nav>
 
+<form th:action="@{/}" method="get" role="search">
+
+    <input th:if="${selectedCategoryId != null}"
+           type="hidden"
+           name="categoryId"
+           th:value="${selectedCategoryId}">
+
+    <label for="keyword">게시글 검색</label>
+    <input type="search"
+           id="keyword"
+           name="keyword"
+           th:value="${keyword}"
+           maxlength="100"
+           placeholder="제목·요약·본문 검색">
+
+    <button type="submit">검색</button>
+
+    <a th:href="@{/(categoryId=${selectedCategoryId})}">
+        검색어 초기화
+    </a>
+</form>
+
+<p>
+    <a th:href="@{/}">전체 글 보기 · 검색 조건 초기화</a>
+</p>
+
 <h2>게시글 목록</h2>
 
+<p th:if="${!#strings.isEmpty(keyword)}">
+    검색어:
+    <strong th:text="${keyword}">검색어</strong>
+</p>
+
 <p th:if="${#lists.isEmpty(posts)}">
-    공개된 게시글이 없습니다.
+    조건에 맞는 공개 게시글이 없습니다.
 </p>
 
 <article th:each="post : ${posts}">

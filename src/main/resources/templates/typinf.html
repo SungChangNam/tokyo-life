@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 JLPT & IT 현장 타자연습</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+        * { box-sizing: border-box; font-family: 'Pretendard', 'Meiryo', 'Yu Gothic', sans-serif; }
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-dark); color: var(--text-main);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .app-container {
+            width: 100%; max-width: 900px;
+            background: var(--panel-bg); border-radius: 16px;
+            padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        /* 상단 헤더 & 컨트롤 바 */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #334155; padding-bottom: 16px; margin-bottom: 20px;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .title { font-size: 1.4rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+        select, .btn {
+            background: #0f172a; color: var(--text-main); border: 1px solid #475569;
+            padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        select:hover, .btn:hover { border-color: var(--accent); }
+        .btn.active { background: var(--accent); color: #0f172a; font-weight: 700; border-color: var(--accent); }
+
+        /* 한컴 스타일 대시보드 (속도, 정확도, 진행도) */
+        .dashboard {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #0f172a; padding: 14px 18px; border-radius: 12px;
+            border: 1px solid #334155; text-align: center;
+        }
+        .stat-label { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+        .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--accent); }
+        .speed-bar-wrap { width: 100%; height: 6px; background: #334155; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .speed-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #4ade80); transition: width 0.2s; }
+
+        /* 메인 타이핑 영역 */
+        .typing-stage {
+            background: #0f172a; border-radius: 14px; padding: 32px 24px;
+            text-align: center; border: 1px solid #334155; margin-bottom: 20px; position: relative;
+        }
+        .badge-step {
+            display: inline-block; background: #334155; color: #e2e8f0;
+            padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 14px;
+        }
+        .kana-guide { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 6px; letter-spacing: 1px; }
+        .kanji-display { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; line-height: 1.4; word-break: keep-all; }
+        .romaji-display {
+            font-size: 1.35rem; font-family: 'Consolas', monospace;
+            letter-spacing: 1.5px; margin-bottom: 16px; min-height: 32px;
+        }
+        .meaning-display {
+            font-size: 1.05rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1);
+            display: inline-block; padding: 6px 16px; border-radius: 8px;
+        }
+
+        /* 글자별 색상 피드백 */
+        .char-correct { color: var(--accent-green); }
+        .char-wrong { color: var(--accent-red); background: rgba(248, 113, 113, 0.2); border-radius: 3px; }
+        .char-current { border-bottom: 3px solid var(--accent); color: #fff; }
+        .char-pending { color: #64748b; }
+
+        /* 입력창 */
+        .input-box { width: 100%; position: relative; }
+        #typing-input {
+            width: 100%; padding: 16px 20px; font-size: 1.3rem;
+            background: #0f172a; color: #fff; border: 2px solid var(--accent);
+            border-radius: 12px; outline: none; text-align: center;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+        #typing-input:focus { border-color: var(--accent-green); }
+        .mode-guide {
+            margin-top: 10px; font-size: 0.85rem; color: var(--text-sub);
+            display: flex; justify-content: space-between;
+        }
+
+        /* 결과 모달 */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--panel-bg); padding: 32px; border-radius: 16px;
+            width: 90%; max-width: 450px; text-align: center; border: 1px solid var(--accent);
+        }
+        .modal-content h2 { margin-top: 0; color: var(--accent); }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="title">⌨️ JP-IT & JLPT 타자 마스터</div>
+        <div class="controls">
+            <select id="category-select">
+                <option value="IT_PRACTICAL">💼 일본 IT 현장 실무 (주석/설계/메일)</option>
+                <option value="JLPT_EXAM">📘 JLPT 핵심 기출 (N3 ~ N1)</option>
+            </select>
+            <select id="step-select">
+                <option value="1">Step 1. 필수 단어 (기초)</option>
+                <option value="2">Step 2. 실무 주석 & 핵심 구문 (중급)</option>
+                <option value="3">Step 3. 실전 비즈니스 장문 (고급)</option>
+            </select>
+            <button class="btn active" id="btn-mode1" onclick="setMode('MODE_1')">방식 1: 로마자 직타</button>
+            <button class="btn" id="btn-mode2" onclick="setMode('MODE_2')">방식 2: IME 한자변환</button>
+        </div>
+    </div>
+
+    <!-- 한컴 스타일 실시간 속도 대시보드 -->
+    <div class="dashboard">
+        <div class="stat-card">
+            <div class="stat-label">실시간 타수 (타/분)</div>
+            <div class="stat-value" id="current-cpm">0</div>
+            <div class="speed-bar-wrap"><div class="speed-bar" id="speed-bar"></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">최고 타수 (타/분)</div>
+            <div class="stat-value" id="max-cpm">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">정확도 (%)</div>
+            <div class="stat-value" id="accuracy">100%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">진행 단계</div>
+            <div class="stat-value" id="progress">1 / 5</div>
+        </div>
+    </div>
+
+    <!-- 문제 표시 스테이지 -->
+    <div class="typing-stage">
+        <div class="badge-step" id="stage-badge">IT 현장 실무 - Step 1</div>
+        <div class="kana-guide" id="kana-display"></div>
+        <div class="kanji-display" id="kanji-display"></div>
+        <div class="romaji-display" id="romaji-display"></div>
+        <div class="meaning-display" id="meaning-display"></div>
+    </div>
+
+    <!-- 입력 영역 -->
+    <div class="input-box">
+        <input type="text" id="typing-input" placeholder="여기를 클릭하고 타이핑을 시작하세요..." autocomplete="off" spellcheck="false" autofocus>
+        <div class="mode-guide">
+            <span id="mode-desc">💡 [방식 1: 로마자 직타] 한영키를 '영문(A)'으로 두고 표시된 알파벳을 그대로 치세요.</span>
+            <span>[ESC] 현재 문장 초기화 | [Enter] 다음 문제</span>
+        </div>
+    </div>
+</div>
+
+<!-- 단계 완료 결과 모달 -->
+<div class="modal" id="result-modal">
+    <div class="modal-content">
+        <h2 id="modal-title">🎉 단계 학습 완료!</h2>
+        <div class="result-grid">
+            <div class="stat-card">
+                <div class="stat-label">평균 타수</div>
+                <div class="stat-value" id="final-cpm">0타</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">평균 정확도</div>
+                <div class="stat-value" id="final-acc">100%</div>
+            </div>
+        </div>
+        <p id="level-up-msg" style="color: #cbd5e1; margin-bottom: 20px;"></p>
+        <button class="btn active" onclick="nextStepOrRetry()" style="width: 100%; padding: 12px;">다음 단계로 이동</button>
+    </div>
+</div>
+
+<script>
+    // 1. 학습 데이터베이스 (IT 현장 실무 & JLPT 기출 데이터)
+    const PROBLEM_DB = {
+        IT_PRACTICAL: {
+            1: [
+                { kanji: "実装", kana: "じっそう", romaji: "jissou", meaning: "구현 (Implementation)" },
+                { kanji: "仕様書", kana: "しようしょ", romaji: "shiyousho", meaning: "사양서 / 설계서" },
+                { kanji: "引数", kana: "ひきすう", romaji: "hikisuu", meaning: "매개변수 (Parameter / Argument)" },
+                { kanji: "戻り値", kana: "もどりち", romaji: "modorichi", meaning: "반환값 (Return Value)" },
+                { kanji: "排他制御", kana: "はいたせいぎょ", romaji: "haitaseigyo", meaning: "배타 제어 (동시성/락 제어)" }
+            ],
+            2: [
+                { kanji: "ビジネスロジックの実行", kana: "びじねすろじっくのじっこう", romaji: "bijinesurojikkunojikkou", meaning: "[실무 주석] 비즈니스 로직의 실행" },
+                { kanji: "任意項目NULL⇒空文字に変換", kana: "にんいこうもくぬるからもじにへんかん", romaji: "ninikouмокunurukaramojihenkan".replace("мо","mo"), meaning: "[실무 주석] 임의 항목 NULL을 빈 문자열로 변환" },
+                { kanji: "実行結果をFormBeanに反映", kana: "じっこうけっかをふぉーむびーんにはんえい", romaji: "jikkoukekkawofo-mubi-nnihanei", meaning: "[실무 주석] 실행 결과를 FormBean에 반영" },
+                { kanji: "単体テストのエビデンスを取得する", kana: "たんたいてすとのえびでんすをしゅとくする", romaji: "tantaitesutonoebidensuwoshutokusuru", meaning: "단위 테스트의 증적(Evidence)을 취득하다" },
+                { kanji: "本番環境へデプロイする", kana: "ほんばんかんきょうへでぷろいする", romaji: "honbankankyouhedepuroisuru", meaning: "운영(본방) 환경에 배포하다" }
+            ],
+            3: [
+                { kanji: "お疲れ様です。修正が完了しましたのでご確認をお願いいたします。", kana: "おつかれさまです。しゅうせいがかんりょうしましたのでごかくにんをおねがいいたします。", romaji: "otsukaresamadesu.shuuseigakanryoushimashitanodegokakuninwoonegaiitashimasu.", meaning: "수고하십니다. 수정이 완료되었으니 확인 부탁드립니다." },
+                { kanji: "原因を調査したところ、DBの接続タイムアウトが判明しました。", kana: "げんいんをちょうさしたところ、DBのせつぞくたいむあうとがはんめいしました。", romaji: "geninwochousashitatokoro,dbnosetsuzokutaimuautogahanmeishimashita.", meaning: "원인을 조사한 결과, DB 연결 타임아웃이 판명되었습니다." },
+                { kanji: "仕様変更に伴う影響範囲を洗い出してください。", kana: "しようへんこうにともなうえいきょうはんいをあらいだしてください。", romaji: "shiyouhenkounitomonauikyouhaniwoaraidashitekudasai.", meaning: "사양 변경에 따른 영향 범위를 전부 파악해 주세요." }
+            ]
+        },
+        JLPT_EXAM: {
+            1: [
+                { kanji: "把握", kana: "はあく", romaji: "haaku", meaning: "[N2 어휘] 파악" },
+                { kanji: "妥協", kana: "だきょう", romaji: "dakyou", meaning: "[N1 어휘] 타협" },
+                { kanji: "迅速", kana: "じんそく", romaji: "jinsoku", meaning: "[N2 어휘] 신속" },
+                { kanji: "懸念", kana: "けねん", romaji: "kenen", meaning: "[N1 어휘] 우려, 염려" },
+                { kanji: "前提", kana: "ぜんてい", romaji: "zentei", meaning: "[N2 어휘] 전제" }
+            ],
+            2: [
+                { kanji: "検討の上、ご連絡いたします", kana: "けんとうのうえ、ごれんらくいたします", romaji: "kentounoue,gorenrakuitashimasu", meaning: "[N2 문법 ~の上] 검토한 후에 연락드리겠습니다" },
+                { kanji: "スケジュールを変更せざるを得ない", kana: "すけじゅーるをへんこうせざるをえない", romaji: "sukeju-ruwohenkousezaruwoenai", meaning: "[N2 문법 ~ざるを得ない] 스케줄을 변경할 수밖에 없다" },
+                { kanji: "努力したわりには結果が出なかった", kana: "どりょくしたわりにはけっかがでなかった", romaji: "doryokushitawarinihakekkagadenakatta", meaning: "[N3 문법 ~わりに] 노력한 것에 비해서는 결과가 안 나왔다" },
+                { kanji: "ご連絡いただき次第、対応します", kana: "ごれんらくいただきしだい、たいおうします", romaji: "gorenrakuitadakishidai,taioushimasu", meaning: "[N2 문법 ~次第] 연락 주시는 대로 대응하겠습니다" }
+            ],
+            3: [
+                { kanji: "技術の進歩に伴い、私たちの働き方も大きく変化している。", kana: "ぎじゅつのしんぽにともない、わたしたちのはたらきかたもおおきくへんかしている。", romaji: "gijutsunoshinponitomonai,watashitachinohatarakikatamoookikuhenkashiteiru.", meaning: "[기출 독해] 기술의 진보에 따라 우리의 일하는 방식도 크게 변화하고 있다." },
+                { kanji: "どんなに優れた計画であっても、実行に移さなければ意味がない。", kana: "どんなにすぐれたけいかくであっても、じっこうにうつさなければいみがない。", romaji: "donnanisuguretakeikakudeattemo,jikkouniutsusanakerebaimiganai.", meaning: "[기출 독해] 아무리 뛰어난 계획이라 할지라도 실행에 옮기지 않으면 의미가 없다." },
+                { kanji: "再発防止に向けて、原因の徹底的な究明が求められている。", kana: "さいはつぼうしにむけて、げんいんのてっていてきなきゅうめいがもとめられている。", romaji: "saihatsuboushinimukete,geninnotetteitekinakyuumeigamotomeraeteiru.", meaning: "[기출 독해] 재발 방지를 위해 원인의 철저한 규명이 요구되고 있다." }
+            ]
+        }
+    };
+
+    // 2. 상태 변수
+    let currentCategory = "IT_PRACTICAL";
+    let currentStep = 1;
+    let currentMode = "MODE_1"; // MODE_1: 로마자 직타, MODE_2: IME 한자변환
+    let problemList = [];
+    let currentIndex = 0;
+
+    let startTime = null;
+    let timerInterval = null;
+    let isComposing = false;
+    let maxCpm = 0;
+    let sessionCpms = [];
+    let sessionAccs = [];
+
+    // DOM 요소
+    const kanjiEl = document.getElementById("kanji-display");
+    const kanaEl = document.getElementById("kana-display");
+    const romajiEl = document.getElementById("romaji-display");
+    const meaningEl = document.getElementById("meaning-display");
+    const inputEl = document.getElementById("typing-input");
+    const cpmEl = document.getElementById("current-cpm");
+    const maxCpmEl = document.getElementById("max-cpm");
+    const accEl = document.getElementById("accuracy");
+    const progressEl = document.getElementById("progress");
+    const speedBar = document.getElementById("speed-bar");
+
+    // 초기 로드
+    function initGame() {
+        currentCategory = document.getElementById("category-select").value;
+        currentStep = parseInt(document.getElementById("step-select").value);
+        problemList = PROBLEM_DB[currentCategory][currentStep];
+        currentIndex = 0;
+        sessionCpms = [];
+        sessionAccs = [];
+        loadProblem();
+    }
+
+    // 모드 전환 (방식 1 vs 방식 2)
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById("btn-mode1").classList.toggle("active", mode === "MODE_1");
+        document.getElementById("btn-mode2").classList.toggle("active", mode === "MODE_2");
+
+        const desc = document.getElementById("mode-desc");
+        if (mode === "MODE_1") {
+            desc.innerText = "💡 [방식 1: 로마자 직타] 한영키를 '영문(A)'으로 두고 화면의 로마자를 그대로 타이핑하세요.";
+            inputEl.placeholder = "영문(Romaji)으로 타이핑하세요...";
+            romajiEl.style.display = "block";
+        } else {
+            desc.innerText = "💡 [방식 2: IME 한자변환] 일본어 입력기(あ)로 바꾼 뒤, 한자 변환(스페이스바)까지 완료해 엔터를 치세요.";
+            inputEl.placeholder = "일본어 IME로 한자까지 변환해 입력하세요...";
+            romajiEl.style.display = "none";
+        }
+        resetCurrentInput();
+        renderTargetText("");
+    }
+
+    // 문제 불러오기
+    function loadProblem() {
+        const p = problemList[currentIndex];
+        const catName = currentCategory === "IT_PRACTICAL" ? "💼 일본 IT 현장 실무" : "📘 JLPT 핵심 기출";
+        document.getElementById("stage-badge").innerText = `${catName} - Step ${currentStep}`;
+
+        kanaEl.innerText = p.kana;
+        meaningEl.innerText = p.meaning;
+        progressEl.innerText = `${currentIndex + 1} / ${problemList.length}`;
+
+        resetCurrentInput();
+        renderTargetText("");
+    }
+
+    function resetCurrentInput() {
+        clearInterval(timerInterval);
+        startTime = null;
+        inputEl.value = "";
+        cpmEl.innerText = "0";
+        accEl.innerText = "100%";
+        speedBar.style.width = "0%";
+        inputEl.focus();
+    }
+
+    // 글자별 실시간 초록/빨강 렌더링
+    function renderTargetText(typed) {
+        const p = problemList[currentIndex];
+        if (currentMode === "MODE_1") {
+            kanjiEl.innerText = p.kanji;
+            let html = "";
+            const target = p.romaji;
+            for (let i = 0; i < target.length; i++) {
+                if (i < typed.length) {
+                    if (typed[i].toLowerCase() === target[i].toLowerCase()) {
+                        html += `<span class="char-correct">${target[i]}</span>`;
+                    } else {
+                        html += `<span class="char-wrong">${target[i]}</span>`;
+                    }
+                } else if (i === typed.length) {
+                    html += `<span class="char-current">${target[i]}</span>`;
+                } else {
+                    html += `<span class="char-pending">${target[i]}</span>`;
+                }
+            }
+            romajiEl.innerHTML = html;
+        } else {
+            // 방식 2: 한자/가나 원문 자체에 색상 입히기
+            const target = p.kanji;
+            let html = "";
+            for (let i = 0; i < target.length; i++) {
+                if (i < typed.length) {
+                    if (typed[i] === target[i]) {
+                        html += `<span class="char-correct">${target[i]}</span>`;
+                    } else {
+                        html += `<span class="char-wrong">${target[i]}</span>`;
+                    }
+                } else if (i === typed.length) {
+                    html += `<span class="char-current">${target[i]}</span>`;
+                } else {
+                    html += `<span class="char-pending">${target[i]}</span>`;
+                }
+            }
+            kanjiEl.innerHTML = html;
+        }
+    }
+
+    // 실시간 타수(CPM) 및 정확도 계산
+    function updateStats() {
+        if (!startTime) return { cpm: 0, acc: 100 };
+        const p = problemList[currentIndex];
+        const typed = inputEl.value;
+        const elapsedMin = (new Date() - startTime) / 1000 / 60;
+
+        // 타건수 환산 (방식1은 알파벳 길이, 방식2는 일본어 1글자당 평균 2.3타로 환산)
+        const strokeCount = currentMode === "MODE_1" ? typed.length : Math.round(typed.length * 2.3);
+        const cpm = elapsedMin > 0.005 ? Math.min(999, Math.round(strokeCount / elapsedMin)) : 0;
+
+        // 정확도 계산
+        const target = currentMode === "MODE_1" ? p.romaji : p.kanji;
+        let correctCount = 0;
+        for (let i = 0; i < typed.length; i++) {
+            if (target[i] && typed[i].toLowerCase() === target[i].toLowerCase()) correctCount++;
+        }
+        const acc = typed.length > 0 ? Math.round((correctCount / typed.length) * 100) : 100;
+
+        cpmEl.innerText = cpm;
+        accEl.innerText = acc + "%";
+        speedBar.style.width = Math.min(100, (cpm / 500) * 100) + "%";
+
+        if (cpm > maxCpm) {
+            maxCpm = cpm;
+            maxCpmEl.innerText = maxCpm;
+        }
+        return { cpm, acc };
+    }
+
+    // 이벤트 리스너 (IME 조합 감지 및 실시간 판정)
+    inputEl.addEventListener("compositionstart", () => { isComposing = true; });
+    inputEl.addEventListener("compositionend", () => {
+        isComposing = false;
+        handleInput();
+    });
+
+    inputEl.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            resetCurrentInput();
+            renderTargetText("");
+            return;
+        }
+        if (!startTime && e.key.length === 1) {
+            startTime = new Date();
+            timerInterval = setInterval(updateStats, 200);
+        }
+        if (e.key === "Enter" && !isComposing) {
+            checkCompletion(true);
+        }
+    });
+
+    inputEl.addEventListener("input", handleInput);
+
+    function handleInput() {
+        const typed = inputEl.value;
+        renderTargetText(typed);
+        updateStats();
+        if (currentMode === "MODE_1") {
+            checkCompletion(false);
+        }
+    }
+
+    // 문장 완료 체크
+    function checkCompletion(isEnterPressed) {
+        const p = problemList[currentIndex];
+        const typed = inputEl.value.trim();
+
+        if (currentMode === "MODE_1") {
+            if (typed.toLowerCase() === p.romaji.toLowerCase()) {
+                finishSentence();
+            }
+        } else {
+            // 방식 2는 한자 원문 또는 히라가나 원문과 일치할 때(또는 엔터 입력 시) 통과
+            if (typed === p.kanji || typed === p.kana || (isEnterPressed && typed.length >= p.kanji.length)) {
+                finishSentence();
+            }
+        }
+    }
+
+    function finishSentence() {
+        const stats = updateStats();
+        sessionCpms.push(stats.cpm);
+        sessionAccs.push(stats.acc);
+
+        currentIndex++;
+        if (currentIndex < problemList.length) {
+            loadProblem();
+        } else {
+            showStageResult();
+        }
+    }
+
+    function showStageResult() {
+        clearInterval(timerInterval);
+        const avgCpm = Math.round(sessionCpms.reduce((a,b) => a+b, 0) / sessionCpms.length) || 0;
+        const avgAcc = Math.round(sessionAccs.reduce((a,b) => a+b, 0) / sessionAccs.length) || 100;
+
+        document.getElementById("final-cpm").innerText = avgCpm + " 타/분";
+        document.getElementById("final-acc").innerText = avgAcc + "%";
+
+        const msgEl = document.getElementById("level-up-msg");
+        if (currentStep < 3) {
+            msgEl.innerText = `Step ${currentStep} 과정을 마쳤습니다! 다음 단계(Step ${currentStep + 1})로 올라가 실전 감각을 키워보세요.`;
+        } else {
+            msgEl.innerText = `축하합니다! 모든 단계를 마스터하셨습니다.`;
+        }
+        document.getElementById("result-modal").style.display = "flex";
+    }
+
+    function nextStepOrRetry() {
+        document.getElementById("result-modal").style.display = "none";
+        const stepSelect = document.getElementById("step-select");
+        if (currentStep < 3) {
+            stepSelect.value = currentStep + 1;
+            // Step 3으로 갈 때는 자동으로 실전 IME 모드(방식 2) 추천 전환
+            if (currentStep + 1 === 3) setMode("MODE_2");
+        }
+        initGame();
+    }
+
+    document.getElementById("category-select").addEventListener("change", initGame);
+    document.getElementById("step-select").addEventListener("change", initGame);
+
+    initGame();
+</script>
+</body>
+</html>
